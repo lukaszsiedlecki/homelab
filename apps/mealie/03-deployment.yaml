@@ -15,13 +15,12 @@ spec:
       labels:
         app: mealie
     spec:
-      # 1. Konfiguracja bezpieczeństwa dla całego Poda
       securityContext:
-        runAsNonRoot: true        # Wymusza, by żaden proces nie był rootem
+        runAsNonRoot: true
         seccompProfile:
-          type: RuntimeDefault    # Używa domyślnego profilu bezpieczeństwa
-        fsGroup: 1000             # Ważne! Sprawia, że podmontowany dysk (PVC) będzie dostępny dla usera o ID 1000
-        runAsUser: 1000           # Domyślny użytkownik (Mealie używa 1000)
+          type: RuntimeDefault
+        fsGroup: 1000
+        runAsUser: 1000
         runAsGroup: 1000
 
       containers:
@@ -30,13 +29,12 @@ spec:
           ports:
             - containerPort: 9000
           
-          # 2. Konfiguracja bezpieczeństwa dla kontenera
           securityContext:
-            allowPrivilegeEscalation: false  # Blokuje eskalację uprawnień (np. sudo)
+            allowPrivilegeEscalation: false
             capabilities:
               drop:
-                - ALL                        # Porzuca wszelkie zbędne uprawnienia Linuxa
-            readOnlyRootFilesystem: false    # Mealie może potrzebować pisać do tmp, więc zostawiamy false (w trybie strict czasem musi być true)
+                - ALL                       
+            readOnlyRootFilesystem: false
 
           env:
             - name: ALLOW_SIGNUP

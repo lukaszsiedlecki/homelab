@@ -9,6 +9,6 @@ spec:
   type: LoadBalancer
   ports:
     - protocol: TCP
-      port: 80        # Port wewnątrz klastra
-      targetPort: 9000 # Port kontenera
-      nodePort: 30090 # Będziesz wchodził przez http://IP_KLASTRA:30090
+      port: 80        
+      targetPort: 9000 
+      nodePort: 30090 
