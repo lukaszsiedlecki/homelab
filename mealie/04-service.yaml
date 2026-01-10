@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mealie
+  namespace: homelab
+spec:
+  selector:
+    app: mealie
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80        # Port wewnątrz klastra
+      targetPort: 9000 # Port kontenera
+      nodePort: 30090 # Będziesz wchodził przez http://IP_KLASTRA:30090

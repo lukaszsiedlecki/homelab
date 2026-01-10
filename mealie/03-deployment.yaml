@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mealie
+  namespace: homelab
+  labels:
+    app: mealie
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mealie
+  template:
+    metadata:
+      labels:
+        app: mealie
+    spec:
+      # 1. Konfiguracja bezpieczeństwa dla całego Poda
+      securityContext:
+        runAsNonRoot: true        # Wymusza, by żaden proces nie był rootem
+        seccompProfile:
+          type: RuntimeDefault    # Używa domyślnego profilu bezpieczeństwa
+        fsGroup: 1000             # Ważne! Sprawia, że podmontowany dysk (PVC) będzie dostępny dla usera o ID 1000
+        runAsUser: 1000           # Domyślny użytkownik (Mealie używa 1000)
+        runAsGroup: 1000
+
+      containers:
+        - name: mealie
+          image: ghcr.io/mealie-recipes/mealie:v3.9.2
+          ports:
+            - containerPort: 9000
+          
+          # 2. Konfiguracja bezpieczeństwa dla kontenera
+          securityContext:
+            allowPrivilegeEscalation: false  # Blokuje eskalację uprawnień (np. sudo)
+            capabilities:
+              drop:
+                - ALL                        # Porzuca wszelkie zbędne uprawnienia Linuxa
+            readOnlyRootFilesystem: false    # Mealie może potrzebować pisać do tmp, więc zostawiamy false (w trybie strict czasem musi być true)
+
+          env:
+            - name: ALLOW_SIGNUP
+              value: "true"
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Warsaw"
+            - name: BASE_URL
+              value: "http://mealie.local"
+            
+            # Baza danych
+            - name: DB_ENGINE
+              value: "postgres"
+            - name: POSTGRES_USER
+              value: "mealie"
+            - name: POSTGRES_DB
+              value: "mealie"
+            - name: POSTGRES_SERVER
+              value: "192.168.0.78"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-secrets
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: mealie-data
+              mountPath: /app/data
+      volumes:
+        - name: mealie-data
+          persistentVolumeClaim:
+            claimName: mealie-data
