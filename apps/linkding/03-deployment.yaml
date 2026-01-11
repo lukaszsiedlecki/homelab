@@ -40,6 +40,9 @@ spec:
           envFrom:
             - secretRef:
                 name: linkding-secret
+	  env:
+	   - name: LD_CSRF_TRUSTED_ORIGINS
+	     value: http://linkding.local
           volumeMounts:
             - name: linkding-data
               mountPath: /etc/linkding/data
