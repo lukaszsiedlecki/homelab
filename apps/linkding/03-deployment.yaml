@@ -27,7 +27,8 @@ spec:
         - name: linkding
           image: sissbruecker/linkding:latest
           ports:
-            - containerPort: 9090
+            - name: http
+              containerPort: 9090
           
           securityContext:
             allowPrivilegeEscalation: false
@@ -37,8 +38,8 @@ spec:
             readOnlyRootFilesystem: false
 
           envFrom:
-	    - secretRef:
-	      name: linding-secret
+            - secretRef:
+                name: linkding-secret
           volumeMounts:
             - name: linkding-data
               mountPath: /etc/linkding/data
