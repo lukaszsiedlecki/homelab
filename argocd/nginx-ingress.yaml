@@ -8,13 +8,15 @@ spec:
   source:
     repoURL: https://kubernetes.github.io/ingress-nginx
     chart: ingress-nginx
-    targetRevision: lates
+    targetRevision: "*"
     helm:
       parameters:
         - name: controller.service.type
           value: LoadBalancer
         - name: controller.service.externalTrafficPolicy
           value: Local
+	- name: controller.service.loadBalancerIP
+	  value: "192.168.20.100"
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
