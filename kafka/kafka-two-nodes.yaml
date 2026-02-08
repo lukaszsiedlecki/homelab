@@ -1,0 +1,106 @@
+# ------------------------------------------------------
+# 1. NODE POOL (2 BROKERY, LEKKIE ZASOBY)
+# ------------------------------------------------------
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: dual-role
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  replicas: 2  # <--- Dwa nody do zabawy partycjami
+  roles:
+    - controller
+    - broker
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 10Gi
+        deleteClaim: false
+        class: longhorn-single  # <--- Oszczędność dysku
+        kraftMetadata: shared
+  
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: "250m"
+    limits:
+      memory: 1Gi  # <--- Limit pamięci (bezpieczeństwo noda)
+      cpu: "1000m"
+
+  jvmOptions:
+    -Xms: 512m
+    -Xmx: 512m
+
+  # Pozwalamy na uruchomienie na 2 różnych workerach (Soft Anti-Affinity)
+  template:
+    pod:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: strimzi.io/cluster
+                      operator: In
+                      values:
+                        - my-cluster
+                    - key: strimzi.io/name
+                      operator: In
+                      values:
+                        - my-cluster-dual-role
+                topologyKey: "kubernetes.io/hostname"
+
+---
+# ------------------------------------------------------
+# 2. KAFKA CLUSTER (LOADBALANCER PLAINTEXT)
+#------------------------------------------------------
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: my-cluster
+  namespace: kafka
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
+spec:
+  kafka:
+    version: 4.1.1
+    metadataVersion: 4.1-IV1
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      
+      # Tuta dzieje się magia stałych IP
+      - name: external
+        port: 9094
+        type: loadbalancer
+        tls: false
+        configuration:
+          # 1. Stałe IP dla BOOTSTRAP (Twoje główne wejście)
+          bootstrap:
+            loadBalancerIP: 192.168.20.11
+          
+          # 2. Stałe IP dla poszczególnych BROKERÓW
+          brokers:
+          - broker: 0
+            loadBalancerIP: 192.168.20.13
+          - broker: 1
+            loadBalancerIP: 192.168.20.14
+
+    config:
+      offsets.topic.replication.factor: 2
+      transaction.state.log.replication.factor: 2
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 2
+      min.insync.replicas: 1
+  
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
