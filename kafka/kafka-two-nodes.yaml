@@ -84,6 +84,8 @@ spec:
       transaction.state.log.min.isr: 1
       default.replication.factor: 2
       min.insync.replicas: 1
+      unclean.leader.election.enable: "false"
+      log.recovery.threads.per.data.dir: 2
   entityOperator:
     topicOperator: {}
     userOperator: {}

@@ -1,6 +1,8 @@
 # values.yaml
 defaultSettings:
   defaultReplicaCount: 1
+  autoSalvage: true
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
 persistence:
   reclaimPolicy: Delete
   defaultClassReplicaCount: 1
