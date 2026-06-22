@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/luk-asz-si/homelab.git'
+    repoURL: 'https://github.com/lukaszsiedlecki/homelab.git'
     targetRevision: HEAD
     path: apps/mealie
   destination:
