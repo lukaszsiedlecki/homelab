@@ -1,0 +1,96 @@
+" ~/.ideavimrc — IdeaVim configuration
+" Docs: https://jb.gg/h38q75   Examples: https://jb.gg/share-ideavimrc
+" Reload after editing with:  :source ~/.ideavimrc   (or Ctrl+Shift+O)
+
+" ==========================================
+" LEADER
+" ==========================================
+" Set leader FIRST, before any mapping that uses it.
+" Space is easy to reach and is what which-key keys off of.
+let mapleader = " "
+
+" ==========================================
+" UI
+" ==========================================
+set number              " absolute line number for the current line
+set relativenumber      " relative numbers for the rest (hybrid numbering)
+set scrolloff=5         " keep 5 lines of context above/below the cursor
+set showcmd             " show the partial command in the bottom-right
+set showmode            " show current Vim mode
+
+" ==========================================
+" SEARCH
+" ==========================================
+set hlsearch            " highlight all matches
+set incsearch           " search as you type
+set ignorecase          " case-insensitive...
+set smartcase           " ...unless the pattern contains an uppercase letter
+
+" ==========================================
+" CLIPBOARD & EDITING
+" ==========================================
+set clipboard+=unnamedplus  " use the system clipboard
+set clipboard+=ideaput      " use IntelliJ's smart paste (indentation-aware)
+set history=1000            " larger command history
+set ideajoin               " 'J' uses IntelliJ's smart join (e.g. Java string concat)
+
+" ==========================================
+" PLUGINS (built into IdeaVim — just enable)
+" ==========================================
+Plug 'machakann/vim-highlightedyank'  " briefly highlight yanked text
+Plug 'tpope/vim-commentary'           " gcc to comment a line, gc<motion> for a range
+set surround                          " ysiw" wrap word, cs"' change quotes, ds" delete
+
+" ==========================================
+" WHICH-KEY (requires the Which-Key plugin installed from Marketplace)
+" ==========================================
+set which-key
+set notimeout           " don't let the key-sequence timeout hide the popup
+let g:WhichKey_DefaultDelay = 0
+" ==========================================
+" IDE ACTION MAPPINGS
+" NOTE: <Action> mappings must use 'nmap', NOT 'nnoremap'.
+" Tip: run "IdeaVim: Track Action Ids" (Ctrl+Shift+A) to discover more IDs.
+" ==========================================
+
+" --- Code: reformat / imports / rename / refactor / intentions / generate
+nmap <leader>cf <Action>(ReformatCode)
+nmap <leader>co <Action>(OptimizeImports)
+nmap <leader>cr <Action>(RenameElement)
+nmap <leader>cR <Action>(Refactorings.QuickListPopupAction)
+nmap <leader>ci <Action>(ShowIntentionActions)
+nmap <leader>cg <Action>(Generate)
+
+" --- Goto / navigation
+nmap <leader>gd <Action>(GotoDeclaration)
+nmap <leader>gi <Action>(GotoImplementation)nmap <leader>gt <Action>(GotoTest)
+nmap <leader>gu <Action>(FindUsages)
+nmap <leader>gs <Action>(FileStructurePopup)
+
+" --- Find / files
+nmap <leader>ff <Action>(GotoFile)
+nmap <leader>fc <Action>(GotoClass)
+nmap <leader>fs <Action>(GotoSymbol)
+nmap <leader>fr <Action>(RecentFiles)
+nmap <leader>fa <Action>(GotoAction)
+
+" --- Run / debug
+nmap <leader>rr <Action>(Run)
+nmap <leader>rd <Action>(Debug)
+nmap <leader>rs <Action>(Stop)
+nmap <leader>rc <Action>(ChooseRunConfiguration)
+nmap <leader>b  <Action>(ToggleLineBreakpoint)
+nmap <leader>rv <Action>(ViewBreakpoints)
+
+" --- Tool windows
+nmap <leader>tt <Action>(ActivateTerminalToolWindow)
+nmap <leader>tp <Action>(ActivateProjectToolWindow)
+
+" ==========================================
+" WHICH-KEY GROUP LABELS (clean popup — names the prefixes)
+" ==========================================
+let g:WhichKeyDesc_code = "<leader>c Code"
+let g:WhichKeyDesc_goto = "<leader>g Goto"
+let g:WhichKeyDesc_find = "<leader>f Find / files"
+let g:WhichKeyDesc_run  = "<leader>r Run / debug"
+let g:WhichKeyDesc_tool = "<leader>t Tool windows"
