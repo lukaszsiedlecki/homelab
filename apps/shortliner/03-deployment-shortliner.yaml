@@ -42,7 +42,7 @@ spec:
               value: "192.168.0.78"
             - name: DB_NAME
               value: "shortliner"
-            - name: DB_USER
+            - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: shortliner-secret
