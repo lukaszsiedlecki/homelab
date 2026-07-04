@@ -1,0 +1,64 @@
+name: Deploy image
+
+on:
+  repository_dispatch:
+    types: [deploy-image]
+
+permissions:
+  contents: write
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve deployment file for service
+        id: resolve
+        env:
+          SERVICE: ${{ github.event.client_payload.service }}
+        run: |
+          case "$SERVICE" in
+            shortliner)
+              echo "file=apps/shortliner/03-deployment-shortliner.yaml" >> "$GITHUB_OUTPUT"
+              ;;
+            shortliner-analytics)
+              echo "file=apps/shortliner/03-deployment-shortliner-analytics.yaml" >> "$GITHUB_OUTPUT"
+              ;;
+            shortliner-frontend)
+              echo "file=apps/shortliner/03-deployment-shortliner-frontend.yaml" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unknown service: $SERVICE" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Patch image tag
+        env:
+          SERVICE: ${{ github.event.client_payload.service }}
+          TAG: ${{ github.event.client_payload.tag }}
+          FILE: ${{ steps.resolve.outputs.file }}
+        run: |
+          yq -i ".spec.template.spec.containers[0].image = \"ghcr.io/lukaszsiedlecki/${SERVICE}:${TAG}\"" "$FILE"
+
+      - name: Commit and push
+        env:
+          SERVICE: ${{ github.event.client_payload.service }}
+          TAG: ${{ github.event.client_payload.tag }}
+          FILE: ${{ steps.resolve.outputs.file }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$FILE"
+          if git diff --cached --quiet; then
+            echo "No changes for $SERVICE at $TAG, nothing to commit"
+          else
+            git commit -m "chore: deploy ${SERVICE} ${TAG}"
+            git push
+          fi

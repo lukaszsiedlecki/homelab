@@ -1,0 +1,80 @@
+# DISABLED — not deployed yet, frontend nginx config needs updating first.
+# Move this file (and 04-service-shortliner-auth.yaml) back up to apps/shortliner/ to re-enable,
+# and restore the /api/auth/ location block in 00-configmap-nginx.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shortliner-auth
+  namespace: shortliner
+  labels:
+    app: shortliner-auth
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: shortliner-auth
+  template:
+    metadata:
+      labels:
+        app: shortliner-auth
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: shortliner-auth
+          image: ghcr.io/lukaszsiedlecki/shortliner-auth:sha-init
+          ports:
+            - containerPort: 8081
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0"
+            - name: AUTH_JDBC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: shortliner-secret
+                  key: AUTH_JDBC_URL
+            - name: AUTH_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: shortliner-secret
+                  key: AUTH_DB_USER
+            - name: AUTH_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: shortliner-secret
+                  key: AUTH_DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: shortliner-secret
+                  key: JWT_SECRET
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8081
+            initialDelaySeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 60

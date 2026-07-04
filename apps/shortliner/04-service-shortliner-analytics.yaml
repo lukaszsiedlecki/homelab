@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: shortliner-analytics-svc
+  namespace: shortliner
+spec:
+  selector:
+    app: shortliner-analytics
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082

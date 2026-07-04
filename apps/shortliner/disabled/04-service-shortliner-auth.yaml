@@ -1,0 +1,14 @@
+# DISABLED — see 03-deployment-shortliner-auth.yaml in this same directory.
+apiVersion: v1
+kind: Service
+metadata:
+  name: shortliner-auth-svc
+  namespace: shortliner
+spec:
+  selector:
+    app: shortliner-auth
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081

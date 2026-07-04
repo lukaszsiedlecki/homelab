@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: shortliner-frontend-svc
+  namespace: shortliner
+spec:
+  selector:
+    app: shortliner-frontend
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000

@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shortliner-frontend
+  namespace: shortliner
+  labels:
+    app: shortliner-frontend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: shortliner-frontend
+  template:
+    metadata:
+      labels:
+        app: shortliner-frontend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+        fsGroup: 1001
+        runAsUser: 1001
+        runAsGroup: 1001
+      containers:
+        - name: shortliner-frontend
+          image: ghcr.io/lukaszsiedlecki/shortliner-frontend:sha-init
+          ports:
+            - containerPort: 3000
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            # readOnlyRootFilesystem: frontend team says "likely safe but untested" — left false
+            # until that's actually verified against the standalone Next.js server's behavior.
+            readOnlyRootFilesystem: false
+          env:
+            # Plain server-side vars (not NEXT_PUBLIC_) — read at server startup/request time by
+            # next.config.js rewrites or a route handler, proxying browser calls to /api/<service>/*
+            # to these internal ClusterIP Services. Not baked into the client JS bundle.
+            - name: SHORTLINER_BACKEND_URL
+              value: "http://shortliner-svc:8080"
+            - name: ANALYTICS_BACKEND_URL
+              value: "http://shortliner-analytics-svc:8082"
+            # AUTH_BACKEND_URL intentionally omitted — shortliner-auth is disabled (see apps/shortliner/disabled/).
+            # Add "http://shortliner-auth-svc:8081" here when auth is re-enabled.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
