@@ -1,0 +1,25 @@
+---
+# Bootstrap "app of apps" — creates/syncs everything else under argocd/.
+# On a brand new cluster this must be applied manually once
+# (kubectl apply -f argocd/00-applications-parent.yaml) since nothing else
+# exists yet to apply it. After that first apply, ArgoCD reconciles this
+# file like any other resource under its own "argocd" source path —
+# including itself — so edits here take effect automatically afterward.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: applications-parent
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/lukaszsiedlecki/homelab.git'
+    targetRevision: HEAD
+    path: argocd
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: homelab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
