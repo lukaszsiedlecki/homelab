@@ -44,6 +44,12 @@ infra/           Infrastructure configs installed separately (not managed by an 
 kafka/           Strimzi-based Kafka cluster (not under argocd/ — applied manually)
 ```
 
+## Related repo: Proxmox IaC
+
+The Proxmox hypervisor layer *underneath* this cluster (the Talos VMs, LXC
+containers, storage, backups) is managed with OpenTofu in a separate repo:
+`~/repo/proxmox`.
+
 ## Key infrastructure
 
 - **ArgoCD**: GitOps engine — all apps under `argocd/` sync automatically (`prune: true`, `selfHeal: true`)
