@@ -26,7 +26,7 @@ spec:
         runAsGroup: 1000
       containers:
         - name: shortliner
-          image: ghcr.io/lukaszsiedlecki/shortliner:sha-0e5668e
+          image: ghcr.io/lukaszsiedlecki/shortliner:sha-cd6cc8a
           ports:
             - containerPort: 8080
           securityContext:
