@@ -24,6 +24,25 @@ Apps live under `apps/` and are registered in `argocd/`. ArgoCD syncs each app's
 
 > `.local` hostnames resolve via your local DNS or `/etc/hosts` pointing to `192.168.20.100`.
 
+## Longhorn
+
+Distributed block storage, installed manually via Helm from `infra/longhorn/values.yaml` — not managed by ArgoCD.
+
+| Component | Details |
+|-----------|---------|
+| **Chart version** | 1.12.0 |
+| **Namespace** | `longhorn-system` |
+| **Default StorageClass** | `longhorn-single` (1 replica — chosen to save disk; a stuck-forever attach on this single-replica setup caused the 2026-07-18 NVMe-saturation incident, see the homelab post-mortem in Obsidian) |
+
+```bash
+helm repo add longhorn https://charts.longhorn.io  # if not already added
+helm repo update longhorn
+helm upgrade --install longhorn longhorn/longhorn -n longhorn-system --create-namespace \
+  --version 1.12.0 -f infra/longhorn/values.yaml
+```
+
+To upgrade: check the [release notes](https://github.com/longhorn/longhorn/releases) for breaking changes affecting this cluster's config (data engine version, frontend type, backing images), bump `--version` in the command above and in this table, then re-run it.
+
 ## Kafka
 
 Strimzi-based Kafka cluster in KRaft mode (no ZooKeeper), applied manually from `kafka/`. Not managed by ArgoCD.
