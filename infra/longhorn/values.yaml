@@ -3,6 +3,36 @@ defaultSettings:
   defaultReplicaCount: 1
   autoSalvage: true
   nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+  # Reserve CPU headroom per instance-manager pod (v1/v2 data engine) so a
+  # busy engine/replica can't starve everything else on a node this small.
+  # NOTE: this chart version (1.11.1) has no equivalent *memory* guarantee
+  # for instance-manager pods — only CPU. The 2026-07-18 incident (Longhorn
+  # retry-loop -> node-wide OOM killing kube-proxy) was ultimately caused by
+  # instance-manager memory growth that this setting cannot cap. See the
+  # stuck-PVC fix and node RAM increase for the parts that actually close
+  # that gap.
+  guaranteedInstanceManagerCPU: '{"v1":"12","v2":"12"}'
+  # Cap the CSI sidecars (attacher/provisioner/resizer/snapshotter/plugin/
+  # node-driver-registrar/liveness-probe) so none of them can grow unbounded
+  # and contribute to node memory pressure.
+  systemManagedCSIComponentsResourceLimits: >-
+    {"csi-attacher":{"requests":{"cpu":"50m","memory":"32Mi"},"limits":{"cpu":"200m","memory":"128Mi"}},
+    "csi-provisioner":{"requests":{"cpu":"50m","memory":"32Mi"},"limits":{"cpu":"200m","memory":"128Mi"}},
+    "csi-resizer":{"requests":{"cpu":"50m","memory":"32Mi"},"limits":{"cpu":"200m","memory":"128Mi"}},
+    "csi-snapshotter":{"requests":{"cpu":"50m","memory":"32Mi"},"limits":{"cpu":"200m","memory":"128Mi"}},
+    "longhorn-csi-plugin":{"requests":{"cpu":"50m","memory":"64Mi"},"limits":{"cpu":"250m","memory":"256Mi"}},
+    "node-driver-registrar":{"requests":{"cpu":"20m","memory":"16Mi"},"limits":{"cpu":"100m","memory":"64Mi"}},
+    "longhorn-liveness-probe":{"requests":{"cpu":"20m","memory":"16Mi"},"limits":{"cpu":"100m","memory":"64Mi"}}}
 persistence:
   reclaimPolicy: Delete
   defaultClassReplicaCount: 1
+longhornManager:
+  # Longhorn Manager itself is lightweight control-plane logic; cap it so a
+  # bug/leak there can't itself become a node-wide OOM source.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
