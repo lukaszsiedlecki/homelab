@@ -1,21 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: shortliner-analytics
+  name: shortliner-payment
   namespace: shortliner
   labels:
-    app: shortliner-analytics
+    app: shortliner-payment
 spec:
-  replicas: 1
-  strategy:
-    type: Recreate
+  replicas: 2
   selector:
     matchLabels:
-      app: shortliner-analytics
+      app: shortliner-payment
   template:
     metadata:
       labels:
-        app: shortliner-analytics
+        app: shortliner-payment
     spec:
       securityContext:
         runAsNonRoot: true
@@ -25,10 +23,10 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
       containers:
-        - name: shortliner-analytics
-          image: ghcr.io/lukaszsiedlecki/shortliner-analytics:sha-4597a50
+        - name: shortliner-payment
+          image: ghcr.io/lukaszsiedlecki/shortliner-payment:latest
           ports:
-            - containerPort: 8082
+            - containerPort: 8083
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -41,19 +39,21 @@ spec:
             - name: DB_HOST
               value: "192.168.0.78"
             - name: DB_NAME
-              value: "shortliner_analytics"
+              value: "shortliner_payment"
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: shortliner-analytics-db-secret
+                  name: shortliner-payment-db-secret
                   key: DB_USER
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: shortliner-analytics-db-secret
+                  name: shortliner-payment-db-secret
                   key: DB_PASSWORD
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+            - name: PAYMENT_DEBUG_ENABLED
+              value: "false"
           resources:
             requests:
               cpu: 200m
@@ -64,10 +64,10 @@ spec:
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 8082
+              port: 8083
             initialDelaySeconds: 30
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 8082
+              port: 8083
             initialDelaySeconds: 60
