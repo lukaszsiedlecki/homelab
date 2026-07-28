@@ -24,7 +24,7 @@ spec:
         runAsGroup: 1000
       containers:
         - name: shortliner-payment
-          image: ghcr.io/lukaszsiedlecki/shortliner-payment:latest
+          image: ghcr.io/lukaszsiedlecki/shortliner-payment:sha-ca0e9f3
           ports:
             - containerPort: 8083
           securityContext:

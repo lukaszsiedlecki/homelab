@@ -28,6 +28,9 @@ jobs:
             shortliner-frontend)
               echo "file=apps/shortliner/03-deployment-shortliner-frontend.yaml" >> "$GITHUB_OUTPUT"
               ;;
+            shortliner-payment)
+              echo "file=apps/shortliner/03-deployment-shortliner-payment.yaml" >> "$GITHUB_OUTPUT"
+              ;;
             *)
               echo "Unknown service: $SERVICE" >&2
               exit 1
