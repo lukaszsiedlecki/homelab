@@ -2,17 +2,17 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: shortliner
-  namespace: shortliner
+  namespace: {{ .Values.namespace }}
 spec:
   ingressClassName: nginx
   rules:
-    - host: shortliner.local
+    - host: {{ .Values.ingress.host }}
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: shortliner-frontend-svc
+                name: {{ .Values.ingress.service }}-svc
                 port:
-                  number: 80
+                  number: {{ .Values.ingress.port }}

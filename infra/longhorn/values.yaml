@@ -26,6 +26,10 @@ defaultSettings:
 persistence:
   reclaimPolicy: Delete
   defaultClassReplicaCount: 1
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  host: longhorn.local
 longhornManager:
   # Longhorn Manager itself is lightweight control-plane logic; cap it so a
   # bug/leak there can't itself become a node-wide OOM source.

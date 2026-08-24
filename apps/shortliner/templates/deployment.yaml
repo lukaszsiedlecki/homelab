@@ -1,0 +1,70 @@
+{{- range .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ .name }}
+spec:
+  replicas: {{ .replicas }}
+  {{- if .strategy }}
+  strategy:
+    type: {{ .strategy }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .name }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+        fsGroup: {{ .securityContext.fsGroup }}
+        runAsUser: {{ .securityContext.runAsUser }}
+        runAsGroup: {{ .securityContext.runAsGroup }}
+      containers:
+        - name: {{ .name }}
+          image: "{{ $.Values.imageRegistry }}/{{ .image }}:{{ .tag }}"
+          ports:
+            - containerPort: {{ .port }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            # readOnlyRootFilesystem false for all services; frontend in particular is untested
+            # against true (standalone Next.js server behavior unverified).
+            readOnlyRootFilesystem: false
+          {{- if .env }}
+          env:
+            {{- range .env }}
+            - name: {{ .name }}
+              {{- if .secretRef }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretRef.name }}
+                  key: {{ .secretRef.key }}
+              {{- else }}
+              value: {{ .value | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: {{ .probes.readinessPath }}
+              port: {{ .port }}
+            initialDelaySeconds: {{ .probes.readinessDelay }}
+          livenessProbe:
+            httpGet:
+              path: {{ .probes.livenessPath }}
+              port: {{ .port }}
+            initialDelaySeconds: {{ .probes.livenessDelay }}
+{{- end }}

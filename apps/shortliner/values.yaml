@@ -1,0 +1,166 @@
+namespace: shortliner
+
+imageRegistry: ghcr.io/lukaszsiedlecki
+
+ingress:
+  host: shortliner.local
+  service: shortliner-frontend
+  port: 80
+
+services:
+  - name: shortliner
+    image: shortliner
+    tag: sha-f22d96e
+    port: 8080
+    replicas: 1
+    strategy: Recreate
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    probes:
+      readinessPath: /actuator/health/readiness
+      readinessDelay: 30
+      livenessPath: /actuator/health/liveness
+      livenessDelay: 60
+    env:
+      - name: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=75.0"
+      - name: DB_HOST
+        value: "192.168.0.78"
+      - name: DB_NAME
+        value: "shortliner"
+      - name: DB_USERNAME
+        secretRef:
+          name: shortliner-db-secret
+          key: DB_USER
+      - name: DB_PASSWORD
+        secretRef:
+          name: shortliner-db-secret
+          key: DB_PASSWORD
+      - name: KAFKA_BOOTSTRAP_SERVERS
+        value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+      - name: CORS_ALLOWED_ORIGINS
+        value: "http://shortliner.local"
+
+  - name: shortliner-analytics
+    image: shortliner-analytics
+    tag: sha-4597a50
+    port: 8082
+    replicas: 1
+    strategy: Recreate
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    probes:
+      readinessPath: /actuator/health/readiness
+      readinessDelay: 30
+      livenessPath: /actuator/health/liveness
+      livenessDelay: 60
+    env:
+      - name: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=75.0"
+      - name: DB_HOST
+        value: "192.168.0.78"
+      - name: DB_NAME
+        value: "shortliner_analytics"
+      - name: DB_USERNAME
+        secretRef:
+          name: shortliner-analytics-db-secret
+          key: DB_USER
+      - name: DB_PASSWORD
+        secretRef:
+          name: shortliner-analytics-db-secret
+          key: DB_PASSWORD
+      - name: KAFKA_BOOTSTRAP_SERVERS
+        value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+
+  - name: shortliner-payment
+    image: shortliner-payment
+    tag: sha-ca0e9f3
+    port: 8083
+    replicas: 2
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    probes:
+      readinessPath: /actuator/health/readiness
+      readinessDelay: 30
+      livenessPath: /actuator/health/liveness
+      livenessDelay: 60
+    env:
+      - name: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=75.0"
+      - name: DB_HOST
+        value: "192.168.0.78"
+      - name: DB_NAME
+        value: "shortliner_payment"
+      - name: DB_USERNAME
+        secretRef:
+          name: shortliner-payment-db-secret
+          key: DB_USER
+      - name: DB_PASSWORD
+        secretRef:
+          name: shortliner-payment-db-secret
+          key: DB_PASSWORD
+      - name: KAFKA_BOOTSTRAP_SERVERS
+        value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+      - name: PAYMENT_DEBUG_ENABLED
+        value: "false"
+
+  - name: shortliner-frontend
+    image: shortliner-frontend
+    tag: sha-e7bd6a3
+    port: 3000
+    servicePort: 80
+    replicas: 1
+    strategy: Recreate
+    securityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 256Mi
+    probes:
+      readinessPath: /
+      readinessDelay: 5
+      livenessPath: /
+      livenessDelay: 10
+    env:
+      # Plain server-side vars (not NEXT_PUBLIC_) — read at server startup/request time by
+      # next.config.js rewrites or a route handler, proxying browser calls to /api/<service>/*
+      # to these internal ClusterIP Services. Not baked into the client JS bundle.
+      - name: SHORTLINER_BACKEND_URL
+        value: "http://shortliner-svc:8080"
+      - name: ANALYTICS_BACKEND_URL
+        value: "http://shortliner-analytics-svc:8082"
+      # AUTH_BACKEND_URL intentionally omitted — shortliner-auth is disabled (see apps/shortliner/disabled/).
+      # Add "http://shortliner-auth-svc:8081" here when auth is re-enabled.

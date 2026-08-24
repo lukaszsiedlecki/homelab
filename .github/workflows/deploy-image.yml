@@ -13,24 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve deployment file for service
-        id: resolve
+      - name: Validate service
         env:
           SERVICE: ${{ github.event.client_payload.service }}
         run: |
           case "$SERVICE" in
-            shortliner)
-              echo "file=apps/shortliner/03-deployment-shortliner.yaml" >> "$GITHUB_OUTPUT"
-              ;;
-            shortliner-analytics)
-              echo "file=apps/shortliner/03-deployment-shortliner-analytics.yaml" >> "$GITHUB_OUTPUT"
-              ;;
-            shortliner-frontend)
-              echo "file=apps/shortliner/03-deployment-shortliner-frontend.yaml" >> "$GITHUB_OUTPUT"
-              ;;
-            shortliner-payment)
-              echo "file=apps/shortliner/03-deployment-shortliner-payment.yaml" >> "$GITHUB_OUTPUT"
-              ;;
+            shortliner|shortliner-analytics|shortliner-frontend|shortliner-payment) ;;
             *)
               echo "Unknown service: $SERVICE" >&2
               exit 1
@@ -46,15 +34,15 @@ jobs:
         env:
           SERVICE: ${{ github.event.client_payload.service }}
           TAG: ${{ github.event.client_payload.tag }}
-          FILE: ${{ steps.resolve.outputs.file }}
+          FILE: apps/shortliner/values.yaml
         run: |
-          yq -i ".spec.template.spec.containers[0].image = \"ghcr.io/lukaszsiedlecki/${SERVICE}:${TAG}\"" "$FILE"
+          yq -i '(.services[] | select(.name == strenv(SERVICE)) | .tag) = strenv(TAG)' "$FILE"
 
       - name: Commit and push
         env:
           SERVICE: ${{ github.event.client_payload.service }}
           TAG: ${{ github.event.client_payload.tag }}
-          FILE: ${{ steps.resolve.outputs.file }}
+          FILE: apps/shortliner/values.yaml
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

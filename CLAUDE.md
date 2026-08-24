@@ -12,6 +12,9 @@ A homelab Kubernetes GitOps repository. ArgoCD watches this repo and automatical
 # Apply a single manifest directly (bypassing ArgoCD)
 kubectl apply -f apps/linkding/03-deployment.yaml
 
+# apps/shortliner is a local Helm chart (see Architecture below) — apply it with:
+helm template shortliner apps/shortliner | kubectl apply -f -
+
 # Force ArgoCD to sync immediately instead of waiting
 argocd app sync <app-name>
 
@@ -35,9 +38,15 @@ Sealed secrets are cluster-specific — they can only be decrypted by the Sealed
 
 ```
 argocd/          ArgoCD Application CRDs — each file points ArgoCD at a path in apps/
-apps/            Per-application raw Kubernetes manifests (numbered for apply order)
+apps/            Per-application raw Kubernetes manifests (numbered for apply order),
+                 except shortliner/ which is a local Helm chart (ArgoCD auto-detects
+                 the source type from the presence of Chart.yaml — no extra config needed)
   linkding/      Bookmarks manager
   mealie/        Recipe manager (uses external Postgres at 192.168.0.78:5432)
+  shortliner/    URL shortener + analytics + payment + frontend; one Helm chart,
+                 one entry per service in values.yaml `services:` list. Image tags are
+                 bumped in values.yaml by .github/workflows/deploy-image.yml (yq, selects
+                 by service name) instead of editing a per-service deployment file.
 infra/           Infrastructure configs installed separately (not managed by an ArgoCD app)
   longhorn/      Helm values for Longhorn distributed storage
   metallb/       MetalLB IP pool config (192.168.20.10–192.168.20.100)
