@@ -1,0 +1,45 @@
+apiVersion: v1
+data:
+  shortliner-realm.json: |
+    {
+      "realm": "shortliner",
+      "enabled": true,
+      "sslRequired": "none",
+      "registrationAllowed": false,
+      "roles": {
+        "realm": [
+          { "name": "user", "description": "Standard shortliner user" },
+          { "name": "admin", "description": "Shortliner administrator" }
+        ]
+      },
+      "defaultRole": {
+        "name": "default-roles-shortliner",
+        "composite": true,
+        "composites": {
+          "realm": ["user"]
+        }
+      },
+      "clients": [
+        {
+          "clientId": "shortliner-frontend",
+          "name": "shortliner-frontend",
+          "enabled": true,
+          "publicClient": true,
+          "protocol": "openid-connect",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "implicitFlowEnabled": false,
+          "serviceAccountsEnabled": false,
+          "redirectUris": ["http://shortliner.local/*"],
+          "webOrigins": ["http://shortliner.local"],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "http://shortliner.local/*"
+          }
+        }
+      ]
+    }
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-import
+  namespace: keycloak

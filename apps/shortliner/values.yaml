@@ -162,5 +162,6 @@ services:
         value: "http://shortliner-svc:8080"
       - name: ANALYTICS_BACKEND_URL
         value: "http://shortliner-analytics-svc:8082"
-      # AUTH_BACKEND_URL intentionally omitted — shortliner-auth is disabled (see apps/shortliner/disabled/).
-      # Add "http://shortliner-auth-svc:8081" here when auth is re-enabled.
+      # OIDC (Keycloak) env vars intentionally omitted — a gateway is going in front of
+      # these services; the frontend will talk only to the gateway, not to Keycloak or
+      # the backends directly. Re-add once the gateway's auth boundary is settled.

@@ -21,6 +21,7 @@ Apps live under `apps/` and are registered in `argocd/`. ArgoCD syncs each app's
 |-----|-------------|-----|
 | **linkding** | Bookmark manager | http://linkding.local |
 | **mealie** | Recipe manager (uses external Postgres at `192.168.0.78:5432`) | http://mealie.local |
+| **shortliner** | URL shortener + analytics + payment + frontend | http://shortliner.local |
 
 > `.local` hostnames resolve via your local DNS or `/etc/hosts` pointing to `192.168.20.100`.
 
@@ -42,6 +43,38 @@ helm upgrade --install longhorn longhorn/longhorn -n longhorn-system --create-na
 ```
 
 To upgrade: check the [release notes](https://github.com/longhorn/longhorn/releases) for breaking changes affecting this cluster's config (data engine version, frontend type, backing images), bump `--version` in the command above and in this table, then re-run it.
+
+## Keycloak
+
+Identity provider for shortliner auth/authz, applied manually from
+`infra/keycloak/` using the official upstream image — not managed by ArgoCD,
+not a Helm chart (Bitnami's free image tags for Keycloak were retired in
+2025 — see the [Bitnami catalog changes](https://github.com/bitnami/containers/issues/83267)
+— so this follows Kafka's raw-manifest, upstream-image pattern instead).
+External Postgres, same host as mealie/shortliner.
+
+| Component | Details |
+|-----------|---------|
+| **Image** | `quay.io/keycloak/keycloak:26.7.3` (official Keycloak project image) |
+| **Namespace** | `keycloak` |
+| **Database** | External Postgres `keycloak` DB on `192.168.0.78:5432` |
+| **URL** | http://keycloak.local |
+| **Realm** | `shortliner` — clients/roles imported from `realm-shortliner.json` (mounted as a ConfigMap, `--import-realm` on every startup — idempotent, skips realms that already exist) |
+
+```bash
+# 1. Create the `keycloak` DB/role on 192.168.0.78 manually (matches the shortliner DBs) — not a k8s manifest.
+
+# 2. Apply Keycloak manifests
+kubectl apply -f infra/keycloak/00-namespace.yaml
+kubectl apply -f infra/keycloak/01-sealed-secret-keycloak-admin.yaml
+kubectl apply -f infra/keycloak/02-sealed-secret-keycloak-db.yaml
+kubectl apply -f infra/keycloak/03-configmap-realm.yaml
+kubectl apply -f infra/keycloak/04-deployment.yaml
+kubectl apply -f infra/keycloak/05-service.yaml
+kubectl apply -f infra/keycloak/06-ingress.yaml
+```
+
+To upgrade: check the [Keycloak release notes](https://www.keycloak.org/downloads) for breaking changes, confirm the new tag exists on [quay.io/keycloak/keycloak](https://quay.io/repository/keycloak/keycloak?tab=tags), bump the `image:` tag in `infra/keycloak/04-deployment.yaml` and in this table, then re-apply.
 
 ## Kafka
 
@@ -73,6 +106,7 @@ apps/            Per-application Kubernetes manifests (numbered for apply order)
 infra/           Infrastructure configs applied outside ArgoCD
   longhorn/      Helm values for Longhorn
   metallb/       MetalLB IP pool config
+  keycloak/      Helm values + realm import for Keycloak (shortliner auth/authz)
 kafka/           Strimzi Kafka cluster (applied manually)
 ```
 

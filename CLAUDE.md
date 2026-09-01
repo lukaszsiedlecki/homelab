@@ -50,6 +50,7 @@ apps/            Per-application raw Kubernetes manifests (numbered for apply or
 infra/           Infrastructure configs installed separately (not managed by an ArgoCD app)
   longhorn/      Helm values for Longhorn distributed storage
   metallb/       MetalLB IP pool config (192.168.20.10–192.168.20.100)
+  keycloak/      Helm values + realm import for Keycloak (shortliner auth/authz)
 kafka/           Strimzi-based Kafka cluster (not under argocd/ — applied manually)
 ```
 
@@ -77,3 +78,7 @@ containers, storage, backups) is managed with OpenTofu in a separate repo:
 ## Kafka specifics
 
 Kafka is managed by the **Strimzi operator** (`kafka.strimzi.io/v1`) and lives in the `kafka` namespace. The cluster uses KRaft mode (no ZooKeeper). External access uses fixed MetalLB IPs: bootstrap at `192.168.20.11`, brokers at `.13` and `.14`. The `kafka/` directory is applied manually, not via ArgoCD.
+
+## Keycloak specifics
+
+Keycloak is shortliner's identity provider (OIDC), deployed as raw manifests in `infra/keycloak/` using the official `quay.io/keycloak/keycloak` image directly — not a Helm chart (Bitnami's free Keycloak image tags were retired in 2025), not managed by ArgoCD, same manual-apply pattern as Kafka. Uses external Postgres (`192.168.0.78:5432`, DB `keycloak`), exposed at `http://keycloak.local` through the shared nginx-ingress controller (no dedicated MetalLB IP, no TLS anywhere in this cluster — `KC_HOSTNAME` is set explicitly with an `http://` scheme in `04-deployment.yaml` rather than derived, since guessing from `KC_PROXY_HEADERS` defaults to `https`). Realm/client config lives as code in `infra/keycloak/realm-shortliner.json`, mounted via ConfigMap and imported on every startup with `--import-realm` (idempotent). Shortliner is being refactored to put a gateway in front of the backend services — the frontend will only talk to the gateway, not to Keycloak or the backends directly — so OIDC env vars are deliberately **not** wired into `apps/shortliner/values.yaml` yet; that wiring depends on where the gateway settles the auth boundary.
