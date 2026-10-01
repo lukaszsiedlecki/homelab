@@ -160,7 +160,7 @@ services:
   # still points at the frontend until the frontend has login/logout and CSRF support.
   - name: shortliner-gateway
     image: shortliner-gateway
-    tag: sha-98d5063
+    tag: sha-949bd81
     port: 8084
     managementPort: 9090
     metrics:
