@@ -32,7 +32,12 @@ spec:
         - name: {{ .name }}
           image: "{{ $.Values.imageRegistry }}/{{ .image }}:{{ .tag }}"
           ports:
-            - containerPort: {{ .port }}
+            - name: http
+              containerPort: {{ .port }}
+            {{- if .managementPort }}
+            - name: management
+              containerPort: {{ .managementPort }}
+            {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -41,8 +46,15 @@ spec:
             # readOnlyRootFilesystem false for all services; frontend in particular is untested
             # against true (standalone Next.js server behavior unverified).
             readOnlyRootFilesystem: false
-          {{- if .env }}
+          {{- if or .env .managementPort }}
           env:
+            {{- if .managementPort }}
+            # Spring Boot relaxed binding for management.server.port: actuator
+            # (health probes, /actuator/prometheus) moves off the app port, so the
+            # frontend's /api/<service>/* proxy can no longer reach it.
+            - name: MANAGEMENT_SERVER_PORT
+              value: {{ .managementPort | quote }}
+            {{- end }}
             {{- range .env }}
             - name: {{ .name }}
               {{- if .secretRef }}
@@ -60,11 +72,11 @@ spec:
           readinessProbe:
             httpGet:
               path: {{ .probes.readinessPath }}
-              port: {{ .port }}
+              port: {{ .managementPort | default .port }}
             initialDelaySeconds: {{ .probes.readinessDelay }}
           livenessProbe:
             httpGet:
               path: {{ .probes.livenessPath }}
-              port: {{ .port }}
+              port: {{ .managementPort | default .port }}
             initialDelaySeconds: {{ .probes.livenessDelay }}
 {{- end }}

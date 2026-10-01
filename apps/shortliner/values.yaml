@@ -12,6 +12,11 @@ services:
     image: shortliner
     tag: sha-f22d96e
     port: 8080
+    # Actuator (probes + metrics) on a separate port — see MANAGEMENT_SERVER_PORT
+    # in templates/deployment.yaml.
+    managementPort: 9090
+    metrics:
+      enabled: true
     replicas: 1
     strategy: Recreate
     securityContext:
@@ -54,6 +59,11 @@ services:
     image: shortliner-analytics
     tag: sha-4597a50
     port: 8082
+    # Actuator (probes + metrics) on a separate port — see MANAGEMENT_SERVER_PORT
+    # in templates/deployment.yaml.
+    managementPort: 9090
+    metrics:
+      enabled: true
     replicas: 1
     strategy: Recreate
     securityContext:
@@ -94,6 +104,11 @@ services:
     image: shortliner-payment
     tag: sha-ca0e9f3
     port: 8083
+    # Actuator (probes + metrics) on a separate port — see MANAGEMENT_SERVER_PORT
+    # in templates/deployment.yaml.
+    managementPort: 9090
+    metrics:
+      enabled: true
     replicas: 2
     securityContext:
       runAsUser: 1000

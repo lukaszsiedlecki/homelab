@@ -5,12 +5,21 @@ kind: Service
 metadata:
   name: {{ .name }}-svc
   namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ .name }}
 spec:
   selector:
     app: {{ .name }}
   type: ClusterIP
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: {{ .servicePort | default .port }}
-      targetPort: {{ .port }}
+      targetPort: http
+    {{- if .managementPort }}
+    - name: management
+      protocol: TCP
+      port: {{ .managementPort }}
+      targetPort: management
+    {{- end }}
 {{- end }}

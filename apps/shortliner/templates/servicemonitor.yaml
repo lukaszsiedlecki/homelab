@@ -1,0 +1,22 @@
+{{- range .Values.services }}
+{{- if and .metrics .metrics.enabled }}
+---
+# Picked up by the in-cluster Prometheus (kube-prometheus-stack in the
+# "monitoring" namespace selects ServiceMonitors from every namespace).
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ .name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  endpoints:
+    - port: {{ if .managementPort }}management{{ else }}http{{ end }}
+      path: {{ .metrics.path | default "/actuator/prometheus" }}
+      interval: {{ .metrics.interval | default "30s" }}
+{{- end }}
+{{- end }}
