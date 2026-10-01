@@ -58,7 +58,7 @@ services:
         value: "http://shortliner.local"
   - name: shortliner-analytics
     image: shortliner-analytics
-    tag: sha-4597a50
+    tag: sha-e11ea11
     port: 8082
     # Actuator (probes + metrics) on a separate port — see MANAGEMENT_SERVER_PORT
     # in templates/deployment.yaml.
