@@ -1,0 +1,67 @@
+# Loki — log storage, single-binary mode on a Longhorn PVC.
+# Consumed by argocd/monitoring-loki.yaml (multi-source $values ref).
+# Logs are shipped by Alloy (values/alloy.yaml); Grafana (LXC) queries them via
+# the loki.local Ingress (basic auth).
+
+fullnameOverride: loki
+deploymentMode: SingleBinary
+
+loki:
+  # Single tenant — no X-Scope-OrgID needed by Alloy or Grafana.
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  schemaConfig:
+    configs:
+      - from: "2026-10-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+  limits_config:
+    retention_period: 168h
+  compactor:
+    retention_enabled: true
+    delete_request_store: filesystem
+  pattern_ingester:
+    enabled: false
+
+singleBinary:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  persistence:
+    enabled: true
+    storageClass: longhorn-single
+    size: 20Gi
+
+# Scalable/distributed components off — everything runs in the single binary.
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+
+# nginx-ingress + basic auth (apps/monitoring/manifests) replaces the gateway.
+gateway:
+  enabled: false
+
+# Memcached caches are overkill at homelab volume (and request GBs of RAM).
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+lokiCanary:
+  enabled: false
+test:
+  enabled: false

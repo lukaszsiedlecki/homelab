@@ -1,0 +1,89 @@
+# kube-prometheus-stack — in-cluster Prometheus for metrics.
+# Consumed by argocd/monitoring-kube-prometheus-stack.yaml (multi-source $values ref).
+# Grafana is NOT deployed here: it runs as an LXC on Proxmox (192.168.0.124) and
+# queries this Prometheus through the prometheus.local Ingress (basic auth).
+
+# Predictable resource names (Services: kps-prometheus, kps-operator, ...)
+fullnameOverride: kps
+
+grafana:
+  enabled: false
+
+# Alerting is done in Grafana for now — saves a StatefulSet + PVC.
+alertmanager:
+  enabled: false
+
+# Talos binds controller-manager, scheduler, etcd and kube-proxy metrics to
+# 127.0.0.1, so they are unreachable for scraping. Disable the scrape jobs and
+# their rules instead of living with permanently-down targets. Re-enable after
+# patching the Talos machine config (bind-address / listen-metrics-urls).
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+defaultRules:
+  rules:
+    alertmanager: false
+    etcd: false
+    kubeControllerManager: false
+    kubeProxy: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    windows: false
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      memory: 256Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      memory: 192Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      memory: 96Mi
+
+prometheus:
+  prometheusSpec:
+    externalUrl: http://prometheus.local
+    retention: 15d
+    retentionSize: 18GB
+    # Pick up ServiceMonitors/PodMonitors/rules from every namespace without
+    # requiring the Helm release label (e.g. the ones in the shortliner chart).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        memory: 2Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          # Metrics are reproducible — 1 Longhorn replica is enough.
+          storageClassName: longhorn-single
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi

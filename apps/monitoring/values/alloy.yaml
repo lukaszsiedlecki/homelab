@@ -1,0 +1,71 @@
+# Grafana Alloy — ships pod logs to Loki.
+# Consumed by argocd/monitoring-alloy.yaml (multi-source $values ref).
+# Logs are tailed through the Kubernetes API (loki.source.kubernetes), not from
+# /var/log/pods on the host — no hostPath/privileged needed on Talos, so a
+# single-replica Deployment is enough (a DaemonSet would ship every line N times).
+
+controller:
+  type: deployment
+  replicas: 1
+
+alloy:
+  resources:
+    requests:
+      cpu: 30m
+      memory: 96Mi
+    limits:
+      memory: 256Mi
+  configMap:
+    content: |
+      discovery.kubernetes "pods" {
+        role = "pod"
+        namespaces {
+          names = ["shortliner", "keycloak", "kafka"]
+        }
+      }
+
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        // shortliner Deployments label pods with app=<service name>
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app", "__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          separator     = ""
+          target_label  = "app"
+        }
+      }
+
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.process.pods.receiver]
+      }
+
+      loki.process "pods" {
+        // Spring Boot structured logging (ECS JSON): promote the level to a
+        // label so Grafana can filter/colour by it. Non-JSON lines pass through.
+        stage.json {
+          expressions = { level = "\"log.level\"" }
+        }
+        stage.labels {
+          values = { level = "" }
+        }
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+        }
+      }

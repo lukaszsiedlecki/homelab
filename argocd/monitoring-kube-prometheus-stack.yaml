@@ -1,0 +1,42 @@
+# In-cluster Prometheus (metrics). Values live in apps/monitoring/values/;
+# apps/monitoring/manifests/ adds the basic-auth SealedSecret and the
+# prometheus.local / loki.local Ingresses that the Grafana LXC queries.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-kube-prometheus-stack
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      # Pinned: major bumps change the bundled CRDs — upgrade deliberately.
+      targetRevision: 91.8.2
+      helm:
+        releaseName: kube-prometheus-stack
+        valueFiles:
+          - $values/apps/monitoring/values/kube-prometheus-stack.yaml
+    - repoURL: 'https://github.com/lukaszsiedlecki/homelab.git'
+      targetRevision: HEAD
+      ref: values
+    - repoURL: 'https://github.com/lukaszsiedlecki/homelab.git'
+      targetRevision: HEAD
+      path: apps/monitoring/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    # node-exporter needs hostNetwork/hostPID/hostPath; Talos enforces the
+    # "baseline" Pod Security level by default, which rejects those pods.
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+    syncOptions:
+      - CreateNamespace=true
+      # The Prometheus Operator CRDs exceed the 256KB last-applied annotation
+      # limit of client-side apply.
+      - ServerSideApply=true

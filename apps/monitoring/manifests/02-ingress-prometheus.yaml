@@ -1,0 +1,25 @@
+# prometheus.local — queried server-side by the Grafana LXC (192.168.0.124).
+# Neither Prometheus nor Loki has auth of its own, so nginx enforces basic auth
+# (user "grafana", password in the monitoring-basic-auth Secret, key "password").
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: monitoring-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Monitoring"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: prometheus.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kps-prometheus
+                port:
+                  number: 9090
