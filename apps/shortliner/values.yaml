@@ -38,6 +38,11 @@ services:
     env:
       - name: JAVA_TOOL_OPTIONS
         value: "-XX:MaxRAMPercentage=75.0"
+      # ECS JSON logs on stdout (Spring Boot >= 3.4) — parsed by Alloy/Loki.
+      - name: LOGGING_STRUCTURED_FORMAT_CONSOLE
+        value: "ecs"
+      - name: SPRING_MAIN_BANNER_MODE
+        value: "off"
       - name: DB_HOST
         value: "192.168.0.78"
       - name: DB_NAME
@@ -85,6 +90,11 @@ services:
     env:
       - name: JAVA_TOOL_OPTIONS
         value: "-XX:MaxRAMPercentage=75.0"
+      # ECS JSON logs on stdout (Spring Boot >= 3.4) — parsed by Alloy/Loki.
+      - name: LOGGING_STRUCTURED_FORMAT_CONSOLE
+        value: "ecs"
+      - name: SPRING_MAIN_BANNER_MODE
+        value: "off"
       - name: DB_HOST
         value: "192.168.0.78"
       - name: DB_NAME
@@ -129,6 +139,11 @@ services:
     env:
       - name: JAVA_TOOL_OPTIONS
         value: "-XX:MaxRAMPercentage=75.0"
+      # ECS JSON logs on stdout (Spring Boot >= 3.4) — parsed by Alloy/Loki.
+      - name: LOGGING_STRUCTURED_FORMAT_CONSOLE
+        value: "ecs"
+      - name: SPRING_MAIN_BANNER_MODE
+        value: "off"
       - name: DB_HOST
         value: "192.168.0.78"
       - name: DB_NAME

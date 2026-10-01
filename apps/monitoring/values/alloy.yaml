@@ -53,10 +53,11 @@ alloy:
       }
 
       loki.process "pods" {
-        // Spring Boot structured logging (ECS JSON): promote the level to a
-        // label so Grafana can filter/colour by it. Non-JSON lines pass through.
+        // Spring Boot structured logging (ECS JSON, {"log":{"level":...}}):
+        // promote the level to a label so Grafana can filter/colour by it.
+        // Non-JSON lines (e.g. frontend, Kafka) pass through unlabelled.
         stage.json {
-          expressions = { level = "\"log.level\"" }
+          expressions = { level = "log.level" }
         }
         stage.labels {
           values = { level = "" }

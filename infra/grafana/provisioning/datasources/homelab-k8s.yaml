@@ -1,0 +1,39 @@
+# Grafana datasources for the in-cluster monitoring stack (apps/monitoring/).
+# Grafana runs as an LXC on Proxmox (192.168.0.124), outside the cluster and
+# outside GitOps — install this file manually:
+#
+#   scp infra/grafana/provisioning/datasources/homelab-k8s.yaml \
+#       root@192.168.0.124:/etc/grafana/provisioning/datasources/
+#   # password: key "password" of the monitoring-basic-auth Secret
+#   kubectl -n monitoring get secret monitoring-basic-auth -o jsonpath='{.data.password}' | base64 -d
+#   # on the LXC: echo 'MONITORING_BASIC_AUTH_PASSWORD=<password>' >> /etc/default/grafana-server
+#   systemctl restart grafana-server
+#
+# Fixed UIDs so dashboards in infra/grafana/dashboards/ can reference them.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus (k8s)
+    uid: prometheus-k8s
+    type: prometheus
+    access: proxy
+    url: http://prometheus.local
+    basicAuth: true
+    basicAuthUser: grafana
+    secureJsonData:
+      basicAuthPassword: $MONITORING_BASIC_AUTH_PASSWORD
+    jsonData:
+      prometheusType: Prometheus
+      timeInterval: 30s
+
+  - name: Loki (k8s)
+    uid: loki-k8s
+    type: loki
+    access: proxy
+    url: http://loki.local
+    basicAuth: true
+    basicAuthUser: grafana
+    secureJsonData:
+      basicAuthPassword: $MONITORING_BASIC_AUTH_PASSWORD
+    jsonData:
+      maxLines: 1000
