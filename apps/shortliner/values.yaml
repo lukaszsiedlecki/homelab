@@ -160,6 +160,11 @@ services:
     tag: sha-0c2e5bf
     port: 3000
     servicePort: 80
+    # prom-client on its own port (not the public Next.js port 3000)
+    metrics:
+      enabled: true
+      port: 9091
+      path: /metrics
     replicas: 1
     strategy: Recreate
     securityContext:
@@ -186,6 +191,8 @@ services:
         value: "http://shortliner-svc:8080"
       - name: ANALYTICS_BACKEND_URL
         value: "http://shortliner-analytics-svc:8082"
+      - name: PAYMENT_BACKEND_URL
+        value: "http://shortliner-payment-svc:8083"
     # OIDC (Keycloak) env vars intentionally omitted — a gateway is going in front of
     # these services; the frontend will talk only to the gateway, not to Keycloak or
     # the backends directly. Re-add once the gateway's auth boundary is settled.

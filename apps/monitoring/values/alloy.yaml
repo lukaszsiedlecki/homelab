@@ -53,11 +53,18 @@ alloy:
       }
 
       loki.process "pods" {
-        // Spring Boot structured logging (ECS JSON, {"log":{"level":...}}):
-        // promote the level to a label so Grafana can filter/colour by it.
-        // Non-JSON lines (e.g. frontend, Kafka) pass through unlabelled.
+        // Promote the log level to a label so Grafana can filter/colour by it.
+        // Spring Boot ECS JSON nests it ({"log":{"level":"INFO"}}); the Next.js
+        // frontend (pino-style) has it top-level ({"level":"info"}).
+        // Non-JSON lines (e.g. Kafka) pass through unlabelled.
         stage.json {
-          expressions = { level = "log.level" }
+          expressions = { level = "log.level || level" }
+        }
+        // Normalise case: frontend logs "info", Spring logs "INFO".
+        // (The chart runs this content through Helm's tpl, hence the escaping.)
+        stage.template {
+          source   = "level"
+          template = "{{`{{ ToUpper .Value }}`}}"
         }
         stage.labels {
           values = { level = "" }

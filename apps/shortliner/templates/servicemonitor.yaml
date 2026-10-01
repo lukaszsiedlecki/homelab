@@ -15,7 +15,8 @@ spec:
     matchLabels:
       app: {{ .name }}
   endpoints:
-    - port: {{ if .managementPort }}management{{ else }}http{{ end }}
+    # dedicated metrics port > Spring management port > app port
+    - port: {{ if .metrics.port }}metrics{{ else if .managementPort }}management{{ else }}http{{ end }}
       path: {{ .metrics.path | default "/actuator/prometheus" }}
       interval: {{ .metrics.interval | default "30s" }}
 {{- end }}

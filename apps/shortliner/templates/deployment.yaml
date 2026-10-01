@@ -38,6 +38,10 @@ spec:
             - name: management
               containerPort: {{ .managementPort }}
             {{- end }}
+            {{- if and .metrics .metrics.port }}
+            - name: metrics
+              containerPort: {{ .metrics.port }}
+            {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
