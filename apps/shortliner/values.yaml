@@ -1,16 +1,13 @@
 namespace: shortliner
-
 imageRegistry: ghcr.io/lukaszsiedlecki
-
 ingress:
   host: shortliner.local
   service: shortliner-frontend
   port: 80
-
 services:
   - name: shortliner
     image: shortliner
-    tag: sha-f22d96e
+    tag: sha-b342b9b
     port: 8080
     # Actuator (probes + metrics) on a separate port — see MANAGEMENT_SERVER_PORT
     # in templates/deployment.yaml.
@@ -59,7 +56,6 @@ services:
         value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
       - name: CORS_ALLOWED_ORIGINS
         value: "http://shortliner.local"
-
   - name: shortliner-analytics
     image: shortliner-analytics
     tag: sha-4597a50
@@ -109,7 +105,6 @@ services:
           key: DB_PASSWORD
       - name: KAFKA_BOOTSTRAP_SERVERS
         value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
-
   - name: shortliner-payment
     image: shortliner-payment
     tag: sha-ca0e9f3
@@ -160,7 +155,6 @@ services:
         value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
       - name: PAYMENT_DEBUG_ENABLED
         value: "false"
-
   - name: shortliner-frontend
     image: shortliner-frontend
     tag: sha-e7bd6a3
@@ -192,6 +186,6 @@ services:
         value: "http://shortliner-svc:8080"
       - name: ANALYTICS_BACKEND_URL
         value: "http://shortliner-analytics-svc:8082"
-      # OIDC (Keycloak) env vars intentionally omitted — a gateway is going in front of
-      # these services; the frontend will talk only to the gateway, not to Keycloak or
-      # the backends directly. Re-add once the gateway's auth boundary is settled.
+    # OIDC (Keycloak) env vars intentionally omitted — a gateway is going in front of
+    # these services; the frontend will talk only to the gateway, not to Keycloak or
+    # the backends directly. Re-add once the gateway's auth boundary is settled.
