@@ -107,7 +107,7 @@ services:
         value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
   - name: shortliner-payment
     image: shortliner-payment
-    tag: sha-42a281f
+    tag: sha-bfedd12
     port: 8083
     # Actuator (probes + metrics) on a separate port — see MANAGEMENT_SERVER_PORT
     # in templates/deployment.yaml.
