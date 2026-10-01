@@ -155,6 +155,61 @@ services:
         value: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
       - name: PAYMENT_DEBUG_ENABLED
         value: "false"
+  # Backend-for-Frontend: OIDC login against Keycloak, session cookie to the browser,
+  # access token relayed to the backends. Not behind the Ingress yet — ingress.service
+  # still points at the frontend until the frontend has login/logout and CSRF support.
+  - name: shortliner-gateway
+    image: shortliner-gateway
+    tag: sha-98d5063
+    port: 8084
+    managementPort: 9090
+    metrics:
+      enabled: true
+    # Sessions (and the tokens behind them) are in memory — >1 replica needs Spring Session first.
+    replicas: 1
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 384Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
+    probes:
+      readinessPath: /actuator/health/readiness
+      readinessDelay: 20
+      livenessPath: /actuator/health/liveness
+      livenessDelay: 60
+    env:
+      - name: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=75.0"
+      - name: LOGGING_STRUCTURED_FORMAT_CONSOLE
+        value: "ecs"
+      - name: SPRING_MAIN_BANNER_MODE
+        value: "off"
+      # Browser-facing issuer (login/logout redirects, `iss` claim) vs. in-cluster URL for
+      # token/JWKS/userinfo calls — keycloak.local doesn't resolve from pods.
+      - name: KEYCLOAK_ISSUER_URI
+        value: "http://keycloak.local/realms/shortliner"
+      - name: KEYCLOAK_INTERNAL_URI
+        value: "http://keycloak.keycloak.svc.cluster.local/realms/shortliner"
+      - name: KEYCLOAK_CLIENT_ID
+        value: "shortliner-gateway"
+      - name: KEYCLOAK_CLIENT_SECRET
+        secretRef:
+          name: shortliner-gateway-keycloak
+          key: KEYCLOAK_CLIENT_SECRET
+      - name: SHORTLINER_BACKEND_URL
+        value: "http://shortliner-svc:8080"
+      - name: ANALYTICS_BACKEND_URL
+        value: "http://shortliner-analytics-svc:8082"
+      - name: PAYMENT_BACKEND_URL
+        value: "http://shortliner-payment-svc:8083"
+      - name: FRONTEND_URL
+        value: "http://shortliner-frontend-svc:80"
   - name: shortliner-frontend
     image: shortliner-frontend
     tag: sha-0c2e5bf

@@ -36,6 +36,24 @@ data:
             "pkce.code.challenge.method": "S256",
             "post.logout.redirect.uris": "http://shortliner.local/*"
           }
+        },
+        {
+          "clientId": "shortliner-gateway",
+          "name": "shortliner-gateway",
+          "enabled": true,
+          "publicClient": false,
+          "clientAuthenticatorType": "client-secret",
+          "protocol": "openid-connect",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "implicitFlowEnabled": false,
+          "serviceAccountsEnabled": false,
+          "redirectUris": ["http://shortliner.local/login/oauth2/code/keycloak", "http://localhost:8084/login/oauth2/code/keycloak"],
+          "webOrigins": ["+"],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "http://shortliner.local/##http://localhost:8084/"
+          }
         }
       ]
     }

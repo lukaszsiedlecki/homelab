@@ -18,7 +18,7 @@ jobs:
           SERVICE: ${{ github.event.client_payload.service }}
         run: |
           case "$SERVICE" in
-            shortliner|shortliner-analytics|shortliner-frontend|shortliner-payment) ;;
+            shortliner|shortliner-analytics|shortliner-frontend|shortliner-payment|shortliner-gateway) ;;
             *)
               echo "Unknown service: $SERVICE" >&2
               exit 1
