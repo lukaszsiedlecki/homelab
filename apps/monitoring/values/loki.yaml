@@ -15,7 +15,9 @@ loki:
     type: filesystem
   schemaConfig:
     configs:
-      - from: "2026-10-01"
+      # Must predate any log line Alloy may ship (it replays existing pod logs on
+      # start); a line older than the first period fails the WHOLE push batch.
+      - from: "2024-01-01"
         store: tsdb
         object_store: filesystem
         schema: v13
