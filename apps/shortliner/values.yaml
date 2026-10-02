@@ -231,7 +231,7 @@ services:
         value: "http://shortliner-frontend-svc:80"
   - name: shortliner-frontend
     image: shortliner-frontend
-    tag: sha-baa27d6
+    tag: sha-7744c14
     port: 3000
     servicePort: 80
     # prom-client on its own port (not the public Next.js port 3000)
