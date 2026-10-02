@@ -2,8 +2,10 @@ namespace: shortliner
 imageRegistry: ghcr.io/lukaszsiedlecki
 ingress:
   host: shortliner.local
-  service: shortliner-frontend
-  port: 80
+  # All traffic enters through the BFF gateway; it routes /api/<service>/** to the
+  # backends (with the user's token) and everything else to shortliner-frontend.
+  service: shortliner-gateway
+  port: 8084
 services:
   - name: shortliner
     image: shortliner
@@ -40,6 +42,12 @@ services:
         value: "ecs"
       - name: SPRING_MAIN_BANNER_MODE
         value: "off"
+      # Keycloak resource server: JWKS from the in-cluster Service (keycloak.local doesn't
+      # resolve from pods), but tokens carry iss=http://keycloak.local/... so check that.
+      - name: KEYCLOAK_JWK_SET_URI
+        value: "http://keycloak.keycloak.svc.cluster.local/realms/shortliner/protocol/openid-connect/certs"
+      - name: KEYCLOAK_ISSUER_URI
+        value: "http://keycloak.local/realms/shortliner"
       - name: DB_HOST
         value: "192.168.0.78"
       - name: DB_NAME
@@ -91,6 +99,12 @@ services:
         value: "ecs"
       - name: SPRING_MAIN_BANNER_MODE
         value: "off"
+      # Keycloak resource server: JWKS from the in-cluster Service (keycloak.local doesn't
+      # resolve from pods), but tokens carry iss=http://keycloak.local/... so check that.
+      - name: KEYCLOAK_JWK_SET_URI
+        value: "http://keycloak.keycloak.svc.cluster.local/realms/shortliner/protocol/openid-connect/certs"
+      - name: KEYCLOAK_ISSUER_URI
+        value: "http://keycloak.local/realms/shortliner"
       - name: DB_HOST
         value: "192.168.0.78"
       - name: DB_NAME
@@ -139,6 +153,12 @@ services:
         value: "ecs"
       - name: SPRING_MAIN_BANNER_MODE
         value: "off"
+      # Keycloak resource server: JWKS from the in-cluster Service (keycloak.local doesn't
+      # resolve from pods), but tokens carry iss=http://keycloak.local/... so check that.
+      - name: KEYCLOAK_JWK_SET_URI
+        value: "http://keycloak.keycloak.svc.cluster.local/realms/shortliner/protocol/openid-connect/certs"
+      - name: KEYCLOAK_ISSUER_URI
+        value: "http://keycloak.local/realms/shortliner"
       - name: DB_HOST
         value: "192.168.0.78"
       - name: DB_NAME
@@ -156,8 +176,7 @@ services:
       - name: PAYMENT_DEBUG_ENABLED
         value: "false"
   # Backend-for-Frontend: OIDC login against Keycloak, session cookie to the browser,
-  # access token relayed to the backends. Not behind the Ingress yet — ingress.service
-  # still points at the frontend until the frontend has login/logout and CSRF support.
+  # access token relayed to the backends. The Ingress points here (see ingress.service).
   - name: shortliner-gateway
     image: shortliner-gateway
     tag: sha-949bd81
