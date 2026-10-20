@@ -179,7 +179,7 @@ services:
   # access token relayed to the backends. The Ingress points here (see ingress.service).
   - name: shortliner-gateway
     image: shortliner-gateway
-    tag: sha-949bd81
+    tag: sha-b1a27df
     port: 8084
     managementPort: 9090
     metrics:
