@@ -1,0 +1,24 @@
+# argocd.local — ArgoCD UI through the shared nginx-ingress (applied manually,
+# like the rest of infra/). argocd-server serves TLS itself (no --insecure),
+# so nginx talks HTTPS to the backend. The argocd CLI keeps using the
+# argocd-server LoadBalancer IP (gRPC), which this does not replace.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server
+  namespace: argocd
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: argocd.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 443

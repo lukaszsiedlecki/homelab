@@ -55,10 +55,30 @@ metadata:
   name: kafka-ui-service
   namespace: kafka
 spec:
-  type: LoadBalancer  # <--- MetalLB da tutaj IP
+  # Reached through the shared ingress as kafka.local (below); no own MetalLB IP.
+  type: ClusterIP
   selector:
     app: kafka-ui
   ports:
     - protocol: TCP
       port: 80
       targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kafka-ui
+  namespace: kafka
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: kafka.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kafka-ui-service
+                port:
+                  number: 80
