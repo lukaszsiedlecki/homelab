@@ -25,6 +25,21 @@ spec:
               value: "my-cluster-kafka-bootstrap:9092"
             - name: KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL
               value: "PLAINTEXT"
+            # Login form: the UI is writable and reachable straight on its
+            # MetalLB IP, so ingress-level auth would not cover it.
+            # Credentials: sealed-secret-kafka-ui-auth.yaml.
+            - name: AUTH_TYPE
+              value: "LOGIN_FORM"
+            - name: SPRING_SECURITY_USER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-ui-auth
+                  key: username
+            - name: SPRING_SECURITY_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-ui-auth
+                  key: password
           resources:
             requests:
               memory: 256Mi

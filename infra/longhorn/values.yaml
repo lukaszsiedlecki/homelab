@@ -30,6 +30,13 @@ ingress:
   enabled: true
   ingressClassName: nginx
   host: longhorn.local
+  # Longhorn UI/API has no auth of its own (anyone who reaches it can delete
+  # volumes), and the home VLAN can reach the ingress, so nginx enforces basic
+  # auth. Secret: sealed-secret-basic-auth.yaml (apply it before helm upgrade).
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: longhorn-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Longhorn"
 longhornManager:
   # Longhorn Manager itself is lightweight control-plane logic; cap it so a
   # bug/leak there can't itself become a node-wide OOM source.
