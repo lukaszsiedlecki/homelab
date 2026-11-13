@@ -2,6 +2,76 @@
 
 Personal Kubernetes homelab running on [Talos Linux](https://www.talos.dev/), managed with GitOps via ArgoCD. Pushing to `main` is enough to deploy — ArgoCD reconciles automatically.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    dev([git push to main]) --> repo[(GitHub repo)]
+    ci[GitHub Actions<br/>deploy-image.yml] -- bumps image tags --> repo
+    repo -- watches --> argocd
+
+    user([Browser]) --> ingress
+
+    subgraph talos["Talos Linux cluster"]
+        argocd[ArgoCD]
+        metallb[MetalLB] -. LoadBalancer IP .-> ingress[nginx-ingress]
+
+        subgraph homelab["namespace: homelab"]
+            linkding[linkding]
+            mealie[mealie]
+            subgraph shortliner["shortliner (Helm chart)"]
+                gateway[gateway<br/>BFF]
+                frontend[frontend]
+                core[shortliner]
+                analytics[analytics]
+                payment[payment]
+            end
+        end
+
+        keycloak[Keycloak]
+
+        subgraph kafkans["namespace: kafka"]
+            kafka[[Kafka<br/>Strimzi, KRaft]]
+            kafkaui[Kafka UI]
+        end
+
+        subgraph monitoring["namespace: monitoring"]
+            prometheus[Prometheus]
+            loki[Loki]
+            alloy[Alloy]
+        end
+
+        longhorn[(Longhorn storage)]
+        sealed[Sealed Secrets]
+    end
+
+    postgres[(External Postgres)]
+    grafana[Grafana LXC]
+
+    argocd -- syncs --> homelab
+    argocd -- syncs --> monitoring
+
+    ingress --> linkding & mealie & gateway & keycloak & kafkaui
+    gateway -- OIDC login --> keycloak
+    gateway --> frontend & core & analytics & payment
+    core & analytics & payment -- validate JWT --> keycloak
+
+    core -- shortliner.clicks --> kafka
+    payment -- shortliner.payments.completed --> kafka
+    kafka -- consumes clicks --> analytics
+    kafkaui --> kafka
+
+    mealie & core & analytics & payment & keycloak --> postgres
+
+    alloy -- pod logs --> loki
+    prometheus -- scrapes /actuator --> shortliner
+    grafana -- prometheus.local / loki.local --> ingress
+
+    kafka & prometheus & loki -.-> longhorn
+```
+
+Solid arrows show traffic and data flow, dotted arrows show infrastructure dependencies. ArgoCD manages the apps under `argocd/`; Keycloak, Kafka and Longhorn are applied manually (see below).
+
 ## Cluster
 
 | Component | Role |
@@ -87,7 +157,7 @@ Strimzi-based Kafka cluster in KRaft mode (no ZooKeeper), applied manually from 
 | **Internal bootstrap** | `my-cluster-kafka-bootstrap:9092` (plaintext) |
 | **External bootstrap** | `192.168.20.11:9094` |
 | **Broker IPs** | broker-0 → `192.168.20.13`, broker-1 → `192.168.20.14` |
-| **Kafka UI** | http://192.168.20.15 |
+| **Kafka UI** | http://kafka.local (login form) |
 
 ```bash
 # Apply Kafka manifests
@@ -103,11 +173,16 @@ argocd/          ArgoCD Application CRDs — each file registers one app
 apps/            Per-application Kubernetes manifests (numbered for apply order)
   linkding/      Bookmark manager
   mealie/        Recipe manager
+  shortliner/    Local Helm chart — one entry per service in values.yaml `services:`
+  monitoring/    values/ for the upstream kube-prometheus-stack, loki and alloy charts,
+                 manifests/ for basic auth and the prometheus.local / loki.local Ingresses
 infra/           Infrastructure configs applied outside ArgoCD
+  argocd/        argocd.local Ingress
+  grafana/       Datasource provisioning + dashboards for the external Grafana LXC
   longhorn/      Helm values for Longhorn
   metallb/       MetalLB IP pool config
-  keycloak/      Helm values + realm import for Keycloak (shortliner auth/authz)
-kafka/           Strimzi Kafka cluster (applied manually)
+  keycloak/      Raw manifests + realm import for Keycloak (shortliner auth/authz)
+kafka/           Strimzi Kafka cluster, topics and Kafka UI (applied manually)
 ```
 
 ## Secrets
