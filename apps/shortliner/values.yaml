@@ -9,7 +9,7 @@ ingress:
 services:
   - name: shortliner
     image: shortliner
-    tag: sha-4c799a0
+    tag: sha-1ef7ab9
     port: 8080
     # Actuator (probes + metrics) on a separate port — see MANAGEMENT_SERVER_PORT
     # in templates/deployment.yaml.
