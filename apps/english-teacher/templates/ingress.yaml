@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: english-teacher
+  namespace: {{ .Values.namespace }}
+  annotations:
+    # Audio uploads (speaking practice) and slow AI answers.
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ .Values.ingress.maxBodySize | quote }}
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+spec:
+  ingressClassName: nginx
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ . }}
+      http:
+        paths:
+          # Same origin for the SPA and the API: no CORS.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.ingress.apiService }}-svc
+                port:
+                  number: {{ $.Values.ingress.apiPort }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.ingress.webService }}-svc
+                port:
+                  number: {{ $.Values.ingress.webPort }}
+    {{- end }}

@@ -7,23 +7,32 @@ on:
 permissions:
   contents: write
 
+# Backend and web of one push dispatch at the same time; serialize so the pushes don't race.
+concurrency:
+  group: deploy-image
+  cancel-in-progress: false
+
 jobs:
   update-manifest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate service
+      - name: Validate service and pick its values file
         env:
           SERVICE: ${{ github.event.client_payload.service }}
         run: |
           case "$SERVICE" in
-            shortliner|shortliner-analytics|shortliner-frontend|shortliner-payment|shortliner-gateway) ;;
+            shortliner|shortliner-analytics|shortliner-frontend|shortliner-payment|shortliner-gateway)
+              FILE=apps/shortliner/values.yaml ;;
+            english-teacher-backend|english-teacher-web)
+              FILE=apps/english-teacher/values.yaml ;;
             *)
               echo "Unknown service: $SERVICE" >&2
               exit 1
               ;;
           esac
+          echo "FILE=$FILE" >> "$GITHUB_ENV"
 
       - name: Install yq
         run: |
@@ -34,7 +43,6 @@ jobs:
         env:
           SERVICE: ${{ github.event.client_payload.service }}
           TAG: ${{ github.event.client_payload.tag }}
-          FILE: apps/shortliner/values.yaml
         run: |
           yq -i '(.services[] | select(.name == strenv(SERVICE)) | .tag) = strenv(TAG)' "$FILE"
 
@@ -42,7 +50,6 @@ jobs:
         env:
           SERVICE: ${{ github.event.client_payload.service }}
           TAG: ${{ github.event.client_payload.tag }}
-          FILE: apps/shortliner/values.yaml
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

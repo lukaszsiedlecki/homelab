@@ -1,0 +1,31 @@
+{{- range .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}-svc
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ .name }}
+spec:
+  selector:
+    app: {{ .name }}
+  type: ClusterIP
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .servicePort | default .port }}
+      targetPort: http
+    {{- if .managementPort }}
+    - name: management
+      protocol: TCP
+      port: {{ .managementPort }}
+      targetPort: management
+    {{- end }}
+    {{- if and .metrics .metrics.port }}
+    - name: metrics
+      protocol: TCP
+      port: {{ .metrics.port }}
+      targetPort: metrics
+    {{- end }}
+{{- end }}

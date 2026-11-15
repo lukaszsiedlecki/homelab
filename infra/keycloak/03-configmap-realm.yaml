@@ -1,5 +1,106 @@
 apiVersion: v1
 data:
+  # Source of truth: lukaszsiedlecki/english-teacher infra/keycloak/english-teacher-realm.json,
+  # plus frontendUrl (HTTPS via NPM) so the browser/Android get an https issuer while
+  # KC_HOSTNAME stays http://keycloak.local for shortliner.
+  english-teacher-realm.json: |
+    {
+      "realm": "english-teacher",
+      "displayName": "English Teacher",
+      "enabled": true,
+      "sslRequired": "external",
+      "registrationAllowed": false,
+      "resetPasswordAllowed": false,
+      "rememberMe": true,
+      "bruteForceProtected": true,
+      "accessTokenLifespan": 300,
+      "ssoSessionIdleTimeout": 2592000,
+      "ssoSessionMaxLifespan": 7776000,
+      "offlineSessionIdleTimeout": 7776000,
+      "roles": {
+        "realm": [
+          {
+            "name": "offline_access",
+            "description": "${role_offline-access}"
+          },
+          {
+            "name": "uma_authorization",
+            "description": "${role_uma_authorization}"
+          },
+          {
+            "name": "learner",
+            "description": "Can use the English Teacher API"
+          },
+          {
+            "name": "default-roles-english-teacher",
+            "description": "Roles every user gets",
+            "composite": true,
+            "composites": {
+              "realm": [
+                "learner",
+                "offline_access",
+                "uma_authorization"
+              ],
+              "client": {
+                "account": [
+                  "view-profile",
+                  "manage-account"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "defaultRole": {
+        "name": "default-roles-english-teacher"
+      },
+      "clients": [
+        {
+          "clientId": "english-web",
+          "name": "English Teacher (web)",
+          "enabled": true,
+          "publicClient": true,
+          "protocol": "openid-connect",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "implicitFlowEnabled": false,
+          "redirectUris": [
+            "https://english.lukis.ovh/*",
+            "http://english.local/*",
+            "http://localhost:5173/*"
+          ],
+          "webOrigins": [
+            "https://english.lukis.ovh",
+            "http://english.local",
+            "http://localhost:5173"
+          ],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "https://english.lukis.ovh/*##http://english.local/*##http://localhost:5173/*"
+          }
+        },
+        {
+          "clientId": "english-android",
+          "name": "English Teacher (Android)",
+          "enabled": true,
+          "publicClient": true,
+          "protocol": "openid-connect",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "implicitFlowEnabled": false,
+          "redirectUris": [
+            "ovh.lukis.englishteacher:/oauth2redirect"
+          ],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "ovh.lukis.englishteacher:/logout"
+          }
+        }
+      ],
+      "attributes": {
+        "frontendUrl": "https://keycloak.lukis.ovh"
+      }
+    }
   shortliner-realm.json: |
     {
       "realm": "shortliner",

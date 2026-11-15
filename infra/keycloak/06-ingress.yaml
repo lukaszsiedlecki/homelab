@@ -5,8 +5,19 @@ metadata:
   namespace: keycloak
 spec:
   ingressClassName: nginx
+  # keycloak.lukis.ovh: NPM (CT 109, HTTPS) -> 192.168.20.100; used by the english-teacher realm.
   rules:
     - host: keycloak.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 80
+    - host: keycloak.lukis.ovh
       http:
         paths:
           - path: /

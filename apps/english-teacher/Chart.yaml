@@ -1,0 +1,6 @@
+apiVersion: v2
+name: english-teacher
+description: English Teacher (Spring Boot API + React SPA), source in lukaszsiedlecki/english-teacher
+type: application
+version: 0.1.0
+appVersion: "1.0"

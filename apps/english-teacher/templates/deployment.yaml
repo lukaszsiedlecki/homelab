@@ -1,0 +1,89 @@
+{{- range .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ .name }}
+spec:
+  replicas: {{ .replicas }}
+  {{- if .strategy }}
+  strategy:
+    type: {{ .strategy }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .name }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+        fsGroup: {{ .securityContext.fsGroup }}
+        runAsUser: {{ .securityContext.runAsUser }}
+        runAsGroup: {{ .securityContext.runAsGroup }}
+      containers:
+        - name: {{ .name }}
+          image: "{{ $.Values.imageRegistry }}/{{ .image }}:{{ .tag }}"
+          ports:
+            - name: http
+              containerPort: {{ .port }}
+            {{- if .managementPort }}
+            - name: management
+              containerPort: {{ .managementPort }}
+            {{- end }}
+            {{- if and .metrics .metrics.port }}
+            - name: metrics
+              containerPort: {{ .metrics.port }}
+            {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            # readOnlyRootFilesystem false: nginx writes config.json at startup and uses /tmp;
+            # the JVM needs /tmp as well.
+            readOnlyRootFilesystem: false
+          {{- if or .env .managementPort }}
+          env:
+            {{- if .managementPort }}
+            # Spring Boot relaxed binding for management.server.port: actuator
+            # (health probes, /actuator/prometheus) moves off the app port, so the
+            # ingress (which only routes the app port) can never reach it.
+            - name: MANAGEMENT_SERVER_PORT
+              value: {{ .managementPort | quote }}
+            {{- end }}
+            {{- range .env }}
+            - name: {{ .name }}
+              {{- if .secretRef }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretRef.name }}
+                  key: {{ .secretRef.key }}
+                  {{- if .secretRef.optional }}
+                  optional: true
+                  {{- end }}
+              {{- else }}
+              value: {{ .value | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: {{ .probes.readinessPath }}
+              port: {{ .managementPort | default .port }}
+            initialDelaySeconds: {{ .probes.readinessDelay }}
+          livenessProbe:
+            httpGet:
+              path: {{ .probes.livenessPath }}
+              port: {{ .managementPort | default .port }}
+            initialDelaySeconds: {{ .probes.livenessDelay }}
+{{- end }}

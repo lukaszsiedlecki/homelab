@@ -1,0 +1,113 @@
+namespace: english-teacher
+imageRegistry: ghcr.io/lukaszsiedlecki
+ingress:
+  # english.lukis.ovh: NPM (CT 109, wildcard cert) -> 192.168.20.100. HTTPS is required by the
+  # browser (OIDC with an https Keycloak) and by Android. english.local is plain-http LAN access.
+  hosts:
+    - english.lukis.ovh
+    - english.local
+  apiService: english-teacher-backend
+  apiPort: 8080
+  webService: english-teacher-web
+  webPort: 80
+  maxBodySize: 25m
+services:
+  - name: english-teacher-backend
+    image: english-teacher-backend
+    # Bumped by .github/workflows/deploy-image.yml on every push to the app repo.
+    tag: sha-0000000
+    port: 8080
+    managementPort: 9090
+    metrics:
+      enabled: true
+    replicas: 1
+    strategy: Recreate
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    probes:
+      readinessPath: /actuator/health/readiness
+      readinessDelay: 30
+      livenessPath: /actuator/health/liveness
+      livenessDelay: 60
+    env:
+      - name: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=75.0"
+      - name: LOGGING_STRUCTURED_FORMAT_CONSOLE
+        value: "ecs"
+      - name: SPRING_MAIN_BANNER_MODE
+        value: "off"
+      # JWKS from the in-cluster Service. The realm has frontendUrl=https://keycloak.lukis.ovh
+      # (see infra/keycloak/03-configmap-realm.yaml), so that is the token issuer. Add the public
+      # issuer here (comma-separated) when the Cloudflare Tunnel is set up.
+      - name: KEYCLOAK_JWK_SET_URI
+        value: "http://keycloak.keycloak.svc.cluster.local/realms/english-teacher/protocol/openid-connect/certs"
+      - name: KEYCLOAK_ISSUER_URIS
+        value: "https://keycloak.lukis.ovh/realms/english-teacher"
+      - name: DB_HOST
+        value: "192.168.0.78"
+      - name: DB_NAME
+        value: "english_teacher"
+      - name: DB_USERNAME
+        secretRef:
+          name: english-teacher-db
+          key: DB_USER
+      - name: DB_PASSWORD
+        secretRef:
+          name: english-teacher-db
+          key: DB_PASSWORD
+      - name: FLYWAY_USERNAME
+        secretRef:
+          name: english-teacher-db
+          key: FLYWAY_USER
+      - name: FLYWAY_PASSWORD
+        secretRef:
+          name: english-teacher-db
+          key: FLYWAY_PASSWORD
+      # Optional so the app starts before the keys exist; AI calls then answer 502.
+      - name: ANTHROPIC_API_KEY
+        secretRef:
+          name: english-teacher-ai
+          key: ANTHROPIC_API_KEY
+          optional: true
+      - name: OPENAI_API_KEY
+        secretRef:
+          name: english-teacher-ai
+          key: OPENAI_API_KEY
+          optional: true
+  - name: english-teacher-web
+    image: english-teacher-web
+    tag: sha-0000000
+    port: 8080
+    servicePort: 80
+    replicas: 1
+    securityContext:
+      runAsUser: 101
+      runAsGroup: 101
+      fsGroup: 101
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+    probes:
+      readinessPath: /healthz
+      readinessDelay: 2
+      livenessPath: /healthz
+      livenessDelay: 10
+    env:
+      # Written to /config.json at container start.
+      - name: OIDC_AUTHORITY
+        value: "https://keycloak.lukis.ovh/realms/english-teacher"
+      - name: OIDC_CLIENT_ID
+        value: "english-web"

@@ -20,7 +20,7 @@ alloy:
       discovery.kubernetes "pods" {
         role = "pod"
         namespaces {
-          names = ["shortliner", "keycloak", "kafka"]
+          names = ["shortliner", "keycloak", "kafka", "english-teacher"]
         }
       }
 

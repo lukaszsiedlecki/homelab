@@ -92,6 +92,7 @@ Apps live under `apps/` and are registered in `argocd/`. ArgoCD syncs each app's
 | **linkding** | Bookmark manager | http://linkding.local |
 | **mealie** | Recipe manager (uses external Postgres at `192.168.0.78:5432`) | http://mealie.local |
 | **shortliner** | URL shortener + analytics + payment + frontend | http://shortliner.local |
+| **english-teacher** | English learning app: Spring Boot API + React SPA, Keycloak realm `english-teacher`, DB `english_teacher` on `192.168.0.78` (source: `lukaszsiedlecki/english-teacher`) | https://english.lukis.ovh (via NPM), http://english.local |
 
 > `.local` hostnames resolve via your local DNS or `/etc/hosts` pointing to `192.168.20.100`.
 
@@ -174,6 +175,7 @@ apps/            Per-application Kubernetes manifests (numbered for apply order)
   linkding/      Bookmark manager
   mealie/        Recipe manager
   shortliner/    Local Helm chart — one entry per service in values.yaml `services:`
+  english-teacher/ Same chart pattern (backend + web); /api -> backend, / -> web on one Ingress
   monitoring/    values/ for the upstream kube-prometheus-stack, loki and alloy charts,
                  manifests/ for basic auth and the prometheus.local / loki.local Ingresses
 infra/           Infrastructure configs applied outside ArgoCD
@@ -181,7 +183,7 @@ infra/           Infrastructure configs applied outside ArgoCD
   grafana/       Datasource provisioning + dashboards for the external Grafana LXC
   longhorn/      Helm values for Longhorn
   metallb/       MetalLB IP pool config
-  keycloak/      Raw manifests + realm import for Keycloak (shortliner auth/authz)
+  keycloak/      Raw manifests + realm imports for Keycloak (shortliner, english-teacher)
 kafka/           Strimzi Kafka cluster, topics and Kafka UI (applied manually)
 ```
 
