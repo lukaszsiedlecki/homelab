@@ -85,7 +85,7 @@ services:
           optional: true
   - name: english-teacher-web
     image: english-teacher-web
-    tag: sha-0000000
+    tag: sha-82e9feb
     port: 8080
     servicePort: 80
     replicas: 1
