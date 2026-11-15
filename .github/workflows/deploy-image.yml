@@ -58,5 +58,11 @@ jobs:
             echo "No changes for $SERVICE at $TAG, nothing to commit"
           else
             git commit -m "chore: deploy ${SERVICE} ${TAG}"
-            git push
+            # checkout is at the dispatch-time commit; another deploy may have pushed since
+            # (concurrency only serializes runs), so rebase onto the latest main and retry.
+            for attempt in 1 2 3; do
+              git pull --rebase origin main && git push && exit 0
+              sleep $((attempt * 5))
+            done
+            exit 1
           fi
