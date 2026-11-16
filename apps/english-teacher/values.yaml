@@ -86,11 +86,17 @@ services:
           name: english-teacher-ai
           key: ANTHROPIC_API_KEY
           optional: true
-      # Speech-to-text (Scribe v3). OPENAI_API_KEY stays in the secret for a future text-to-speech.
+      # Speech-to-text (Scribe v3).
       - name: ELEVENLABS_API_KEY
         secretRef:
           name: english-teacher-ai
           key: ELEVENLABS_API_KEY
+          optional: true
+      # Text-to-speech for reviews (gpt-4o-mini-tts, American voice); without it the browser's voice is used.
+      - name: OPENAI_API_KEY
+        secretRef:
+          name: english-teacher-ai
+          key: OPENAI_API_KEY
           optional: true
       - name: STORAGE_PATH
         value: "/data"
