@@ -10,7 +10,8 @@ ingress:
   apiPort: 8080
   webService: english-teacher-web
   webPort: 80
-  maxBodySize: 25m
+  # Library uploads go one file per request; the largest is a ZIP of a Google Drive folder (backend limit 100 MB).
+  maxBodySize: 100m
 recordings:
   pvName: english-teacher-recordings
   claimName: english-teacher-recordings
