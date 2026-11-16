@@ -1,0 +1,45 @@
+{{- with .Values.recordings }}
+# Recordings from speaking practice, on the NAS (OMV share english-teacher-app ->
+# /export/lukasz/english/app, NFSv4, all_squash to uid 1000 / gid 100; ADR 0006 in the app repo).
+# A static PV + PVC instead of an inline nfs: volume, which PodSecurity "restricted" warns about.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .pvName }}
+spec:
+  capacity:
+    storage: {{ .size }}
+  accessModes:
+    - ReadWriteMany
+  # Never delete the recordings when the claim goes away.
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  # soft: if the NAS is down, a write fails after ~15 s and the backend saves the review without
+  # the audio, instead of hanging the request (same choice as the media VM mounts).
+  mountOptions:
+    - nfsvers=4.2
+    - soft
+    - timeo=50
+    - retrans=2
+    - noatime
+  nfs:
+    server: {{ .nfs.server }}
+    path: {{ .nfs.path }}
+  claimRef:
+    namespace: {{ $.Values.namespace }}
+    name: {{ .claimName }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .claimName }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: {{ .pvName }}
+  resources:
+    requests:
+      storage: {{ .size }}
+{{- end }}

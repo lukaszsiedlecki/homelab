@@ -74,6 +74,10 @@ spec:
               {{- end }}
             {{- end }}
           {{- end }}
+          {{- with .volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .resources | nindent 12 }}
           readinessProbe:
@@ -86,4 +90,8 @@ spec:
               path: {{ .probes.livenessPath }}
               port: {{ .managementPort | default .port }}
             initialDelaySeconds: {{ .probes.livenessDelay }}
+      {{- with .volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}

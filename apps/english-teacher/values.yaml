@@ -11,6 +11,13 @@ ingress:
   webService: english-teacher-web
   webPort: 80
   maxBodySize: 25m
+recordings:
+  pvName: english-teacher-recordings
+  claimName: english-teacher-recordings
+  size: 50Gi
+  nfs:
+    server: 192.168.0.18
+    path: /english-teacher-app
 services:
   - name: english-teacher-backend
     image: english-teacher-backend
@@ -78,11 +85,21 @@ services:
           name: english-teacher-ai
           key: ANTHROPIC_API_KEY
           optional: true
-      - name: OPENAI_API_KEY
+      # Speech-to-text (Scribe v3). OPENAI_API_KEY stays in the secret for a future text-to-speech.
+      - name: ELEVENLABS_API_KEY
         secretRef:
           name: english-teacher-ai
-          key: OPENAI_API_KEY
+          key: ELEVENLABS_API_KEY
           optional: true
+      - name: STORAGE_PATH
+        value: "/data"
+    volumeMounts:
+      - name: recordings
+        mountPath: /data
+    volumes:
+      - name: recordings
+        persistentVolumeClaim:
+          claimName: english-teacher-recordings
   - name: english-teacher-web
     image: english-teacher-web
     tag: sha-4680033
