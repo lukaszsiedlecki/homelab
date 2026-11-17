@@ -98,6 +98,23 @@ services:
           name: english-teacher-ai
           key: OPENAI_API_KEY
           optional: true
+      # Flashcard pictures (ADR 0016): photo and GIF search; without them only AI pictures are offered.
+      - name: PEXELS_API_KEY
+        secretRef:
+          name: english-teacher-ai
+          key: PEXELS_API_KEY
+          optional: true
+      - name: GIPHY_API_KEY
+        secretRef:
+          name: english-teacher-ai
+          key: GIPHY_API_KEY
+          optional: true
+      # Songs (ADR 0018): Genius search, lyrics pages and annotations; without it LRCLIB and YouTube still work.
+      - name: GENIUS_ACCESS_TOKEN
+        secretRef:
+          name: english-teacher-ai
+          key: GENIUS_ACCESS_TOKEN
+          optional: true
       - name: STORAGE_PATH
         value: "/data"
     volumeMounts:
