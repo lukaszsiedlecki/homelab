@@ -29,7 +29,9 @@ services:
     metrics:
       enabled: true
     replicas: 1
-    strategy: Recreate
+    # The new pod must be ready before the old one stops (no 503 during a deploy); the NFS volume is
+    # ReadWriteMany, so both pods can mount it for the minute they overlap.
+    strategy: RollingUpdate
     securityContext:
       runAsUser: 1000
       runAsGroup: 1000
