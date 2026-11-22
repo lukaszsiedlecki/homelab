@@ -2,3 +2,8 @@ notes/
 .idea/
 .claude/
 skills-lock.json
+
+# Personal CVs never belong in this public repo
+*Resume*.pdf
+*resume*.pdf
+*CV*.pdf
