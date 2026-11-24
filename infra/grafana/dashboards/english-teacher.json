@@ -1,0 +1,1339 @@
+{
+  "title": "English Teacher: AI",
+  "uid": "english-teacher-ai",
+  "description": "Every AI call of english-teacher: cost, latency, failures, prompt versions and their logs.",
+  "tags": [
+    "english-teacher",
+    "ai",
+    "homelab"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "operation",
+        "label": "Operation",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-k8s"
+        },
+        "query": {
+          "query": "label_values(english_teacher_ai_call_seconds_count, operation)",
+          "refId": "operation"
+        },
+        "definition": "label_values(english_teacher_ai_call_seconds_count, operation)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "prompt",
+        "label": "Prompt version",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-k8s"
+        },
+        "query": {
+          "query": "label_values(english_teacher_ai_call_seconds_count{operation=~\"$operation\"}, prompt)",
+          "refId": "prompt"
+        },
+        "definition": "label_values(english_teacher_ai_call_seconds_count{operation=~\"$operation\"}, prompt)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "trace",
+        "label": "Trace",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        }
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "New prompt version",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "english-teacher-db"
+        },
+        "enable": true,
+        "iconColor": "purple",
+        "target": {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "english-teacher-db"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT min(created_at) AS time, 'New prompt version: ' || prompt AS text, operation AS tags FROM ai_usage WHERE prompt IS NOT NULL GROUP BY prompt, operation HAVING min(created_at) BETWEEN $__timeFrom() AND $__timeTo()"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Costs",
+      "id": 2,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Cost today",
+      "description": "Since midnight (Europe/Warsaw), from ai_usage.cost_usd.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "english-teacher-db"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "english-teacher-db"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(sum(cost_usd), 0) AS cost FROM ai_usage WHERE created_at >= date_trunc('day', now() AT TIME ZONE 'Europe/Warsaw') AT TIME ZONE 'Europe/Warsaw' AND operation IN (${operation:sqlstring})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 3,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Cost this month",
+      "description": "Calendar month (Europe/Warsaw), from ai_usage.cost_usd.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "english-teacher-db"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "english-teacher-db"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(sum(cost_usd), 0) AS cost FROM ai_usage WHERE created_at >= date_trunc('month', now() AT TIME ZONE 'Europe/Warsaw') AT TIME ZONE 'Europe/Warsaw' AND operation IN (${operation:sqlstring})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 4,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Cost in range",
+      "description": "The dashboard's time range.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "english-teacher-db"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "english-teacher-db"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(sum(cost_usd), 0) AS cost FROM ai_usage WHERE $__timeFilter(created_at) AND operation IN (${operation:sqlstring}) AND COALESCE(prompt, 'none') IN (${prompt:sqlstring})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 5,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "AI calls in range",
+      "description": "Successful calls recorded in ai_usage.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "english-teacher-db"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "english-teacher-db"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS calls FROM ai_usage WHERE $__timeFilter(created_at) AND operation IN (${operation:sqlstring}) AND COALESCE(prompt, 'none') IN (${prompt:sqlstring})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 6,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Failed calls in range",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "(sum(increase(english_teacher_ai_call_seconds_count{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\", outcome=\"error\"}[$__range])) or vector(0)) / sum(increase(english_teacher_ai_call_seconds_count{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\"}[$__range]))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 7,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Latency p95 in range",
+      "description": "How long the provider took to answer (successful calls).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(english_teacher_ai_call_seconds_bucket{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\", outcome=\"success\"}[$__range])))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 8,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Cost per day by provider",
+      "description": "From Postgres (ai_usage), so it reaches back further than Prometheus. Set the range to 30 days.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "english-teacher-db"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "english-teacher-db"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', created_at AT TIME ZONE 'Europe/Warsaw') AT TIME ZONE 'Europe/Warsaw' AS time, CASE WHEN operation = 'transcribe' THEN 'elevenlabs' WHEN operation IN ('speech', 'image') THEN 'openai' ELSE 'anthropic' END AS metric, sum(cost_usd) AS cost FROM ai_usage WHERE $__timeFilter(created_at) AND operation IN (${operation:sqlstring}) GROUP BY 1, 2 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 9,
+      "gridPos": {
+        "h": 10,
+        "w": 14,
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Cost by operation (range)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "english-teacher-db"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "english-teacher-db"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT operation, sum(cost_usd) AS cost FROM ai_usage WHERE $__timeFilter(created_at) AND operation IN (${operation:sqlstring}) AND COALESCE(prompt, 'none') IN (${prompt:sqlstring}) GROUP BY 1 ORDER BY 2 DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 3,
+          "min": 0,
+          "color": {
+            "mode": "continuous-BlYlRd"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^cost$/",
+          "values": true
+        }
+      },
+      "id": 10,
+      "gridPos": {
+        "h": 10,
+        "w": 10,
+        "x": 14,
+        "y": 6
+      }
+    },
+    {
+      "type": "row",
+      "title": "Calls, latency and errors",
+      "id": 11,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Calls by operation",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum by (operation) (increase(english_teacher_ai_call_seconds_count{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\"}[$__interval]))",
+          "legendFormat": "{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "15m",
+      "id": 12,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p95 by operation",
+      "description": "Buckets 0.5 s to 120 s, so the value is an upper bound of the bucket.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (operation, le) (increase(english_teacher_ai_call_seconds_bucket{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\", outcome=\"success\"}[$__interval])))",
+          "legendFormat": "{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "points",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "15m",
+      "id": 13,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Failed calls by kind",
+      "description": "credits, auth, rate_limit, overloaded, timeout, server_error, refused, incomplete, network, unexpected",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum by (operation, error) (increase(english_teacher_ai_call_seconds_count{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\", outcome=\"error\"}[$__interval]))",
+          "legendFormat": "{{operation}}: {{error}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "15m",
+      "id": 14,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Tokens by operation",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum by (operation, type) (increase(english_teacher_ai_tokens_total{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\"}[$__interval]))",
+          "legendFormat": "{{operation}} {{type}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "15m",
+      "id": 15,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      }
+    },
+    {
+      "type": "row",
+      "title": "Prompt versions",
+      "id": 16,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Prompt versions",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "english-teacher-db"
+      },
+      "description": "Every prompt version seen in the range: when it first and last answered, how big its answers are, what it cost.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "english-teacher-db"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT prompt AS \"Prompt\", operation AS \"Operation\", min(created_at) AS \"First seen\", max(created_at) AS \"Last seen\", count(*) AS \"Calls\", round(avg(input_tokens)) AS \"Avg input tokens\", round(avg(output_tokens)) AS \"Avg output tokens\", sum(cost_usd) AS \"Cost\", sum(cost_usd) / count(*) AS \"Cost per call\" FROM ai_usage WHERE $__timeFilter(created_at) AND prompt IS NOT NULL AND operation IN (${operation:sqlstring}) AND COALESCE(prompt, 'none') IN (${prompt:sqlstring}) GROUP BY 1, 2 ORDER BY 2, 3 DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost per call"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 5
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "First seen|Last seen"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Operation",
+            "desc": false
+          }
+        ]
+      },
+      "id": 17,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Output tokens per call by prompt version",
+      "description": "Did editing a prompt make its answers longer or shorter? The dashed lines mark a new version.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum by (prompt) (increase(english_teacher_ai_tokens_total{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\", type=\"output\"}[$__interval])) / sum by (prompt) (increase(english_teacher_ai_call_seconds_count{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\", outcome=\"success\"}[$__interval]))",
+          "legendFormat": "{{prompt}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "points",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "1h",
+      "id": 18,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 44
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Average latency by prompt version",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum by (prompt) (increase(english_teacher_ai_call_seconds_sum{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\", outcome=\"success\"}[$__interval])) / sum by (prompt) (increase(english_teacher_ai_call_seconds_count{namespace=\"english-teacher\", operation=~\"$operation\", prompt=~\"$prompt\", outcome=\"success\"}[$__interval]))",
+          "legendFormat": "{{prompt}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "points",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "1h",
+      "id": 19,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 44
+      }
+    },
+    {
+      "type": "row",
+      "title": "Logs",
+      "id": 20,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 53
+      },
+      "panels": []
+    },
+    {
+      "type": "logs",
+      "title": "AI calls",
+      "description": "One line per call: operation, prompt version, model, time, tokens, cost, Anthropic response id, trace id. Copy a trace id into the Trace field above to see everything that request logged.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki-k8s"
+          },
+          "refId": "A",
+          "expr": "{namespace=\"english-teacher\", container=\"english-teacher-backend\"} |= \"AI call\" | json | ai_operation=~\"$operation\" | ai_prompt=~\"$prompt\" | line_format \"{{.ai_operation}}  {{.ai_prompt}}  {{.ai_model}}  {{.ai_duration_ms}} ms  tokens {{.ai_input_tokens}}/{{.ai_output_tokens}}  {{.ai_cost_usd}} USD  {{.ai_response_id}}  trace={{.traceId}}\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      },
+      "id": 21,
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 54
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Warnings and errors",
+      "description": "",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki-k8s"
+          },
+          "refId": "A",
+          "expr": "{namespace=\"english-teacher\", container=\"english-teacher-backend\"} | json | log_level=~\"WARN|ERROR\" | line_format \"{{.log_level}} {{.log_logger}}: {{.message}}\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      },
+      "id": 22,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 64
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Trace",
+      "description": "Paste a trace id into the Trace field: every log line of that request, background workers included.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki-k8s"
+          },
+          "refId": "A",
+          "expr": "{namespace=\"english-teacher\"} | json | traceId=\"$trace\" | traceId!=\"\" | line_format \"{{.process_thread_name}} {{.log_logger}}: {{.message}}\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      },
+      "id": 23,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 64
+      }
+    },
+    {
+      "type": "row",
+      "title": "Backend",
+      "id": 24,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 74
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests / s",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"english-teacher\", container=\"english-teacher-backend\", uri!~\"/actuator.*|/api/v1/health\"}[$__rate_interval]))",
+          "legendFormat": "requests"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 25,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 75
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP average latency by endpoint (top 8)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "topk(8, sum by (uri) (rate(http_server_requests_seconds_sum{namespace=\"english-teacher\", container=\"english-teacher-backend\", uri!~\"/actuator.*|/api/v1/health\"}[$__rate_interval])) / sum by (uri) (rate(http_server_requests_seconds_count{namespace=\"english-teacher\", container=\"english-teacher-backend\", uri!~\"/actuator.*|/api/v1/health\"}[$__rate_interval])))",
+          "legendFormat": "{{uri}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "points",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 26,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 75
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Heap used",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum(jvm_memory_used_bytes{namespace=\"english-teacher\", area=\"heap\"})",
+          "legendFormat": "heap"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 27,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 75
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# Dashboards from infra/grafana/dashboards/ loaded from files on the Grafana LXC (CT 118), so the
+# versioned JSON is what Grafana shows. Install / update from this repo (Grafana picks up JSON changes
+# within a minute; a new provisioning file needs `systemctl restart grafana-server`):
+#   ssh root@192.168.0.104 "pct exec 118 -- sh -c 'cat > /etc/grafana/provisioning/dashboards/homelab.yaml'" < infra/grafana/provisioning/dashboards/homelab.yaml
+#   ssh root@192.168.0.104 "pct exec 118 -- sh -c 'cat > /var/lib/grafana/dashboards/homelab/english-teacher.json'" < infra/grafana/dashboards/english-teacher.json
+# UI edits are allowed but not saved back: change the JSON here and copy it again.
+# shortliner.json was imported by hand in the UI and is not copied there (same uid would clash).
+apiVersion: 1
+
+providers:
+  - name: homelab
+    orgId: 1
+    folder: Homelab
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 60
+    options:
+      path: /var/lib/grafana/dashboards/homelab

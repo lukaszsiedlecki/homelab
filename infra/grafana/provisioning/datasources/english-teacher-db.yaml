@@ -1,0 +1,20 @@
+# english-teacher's Postgres for the "English Teacher: AI" dashboard: role english_teacher_grafana can only
+# SELECT app.ai_usage (english-teacher repo, infra/db/002-grafana-reader.sql). The Postgres firewall lets
+# the Grafana LXC (192.168.0.124) reach 5432 (~/repo/proxmox homelab/guest_firewall.tf).
+# Password: only in Postgres and in /etc/default/grafana-server on the LXC (ENGLISH_TEACHER_DB_GRAFANA_PASSWORD).
+apiVersion: 1
+
+datasources:
+  - name: English Teacher DB
+    uid: english-teacher-db
+    type: grafana-postgresql-datasource
+    url: 192.168.0.78:5432
+    user: english_teacher_grafana
+    secureJsonData:
+      password: $ENGLISH_TEACHER_DB_GRAFANA_PASSWORD
+    jsonData:
+      database: english_teacher
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false
+      maxOpenConns: 3
