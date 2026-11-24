@@ -63,7 +63,10 @@ prometheus-node-exporter:
 prometheus:
   prometheusSpec:
     externalUrl: http://prometheus.local
-    retention: 15d
+    # 30 days for the english-teacher AI cost/prompt dashboards. ~0.5 GB/day measured
+    # (7.9 GB for 15 days, Nov 2026), so 30 days is ~16 GB: retentionSize stays the safety
+    # net under the 20Gi volume (the oldest blocks go first when it is reached).
+    retention: 30d
     retentionSize: 18GB
     # Pick up ServiceMonitors/PodMonitors/rules from every namespace without
     # requiring the Helm release label (e.g. the ones in the shortliner chart).
