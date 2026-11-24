@@ -23,7 +23,7 @@ services:
   - name: english-teacher-backend
     image: english-teacher-backend
     # Bumped by .github/workflows/deploy-image.yml on every push to the app repo.
-    tag: sha-5992c6f
+    tag: sha-7750d00
     port: 8080
     managementPort: 9090
     metrics:
