@@ -206,6 +206,23 @@ place([
               "Paste a trace id into the Trace field: every log line of that request, background workers included.")),
 ], 10)
 
+# ---------------------------------------------------------------- Claude Code -> app (MCP, ADR 0021)
+row("Claude Code \u2192 app")
+place([
+    (12, series("MCP tool calls", [prom(
+        f"sum by (tool, outcome) (increase(english_teacher_mcp_calls_total{{{NS}}}[$__interval]))", "{{tool}} {{outcome}}")],
+        "short", P, bars=True, stack=True, interval="1h",
+        description="add_corrections and add_phrases calls from Claude Code; error = the tool failed, rejected = too many items.")),
+    (12, series("Items sent from Claude Code", [prom(
+        f"sum by (tool, result) (increase(english_teacher_mcp_items_total{{{NS}}}[$__interval]))", "{{tool}} {{result}}")],
+        "short", P, bars=True, stack=True, interval="1h",
+        description="added = new corrections in the inbox / new phrases in the flashcards; skipped = already there.")),
+], 8)
+place([
+    (24, logs("MCP calls", f'{LOGS} |= "MCP tool" | json '
+                           f'| line_format "{{{{.log_level}}}} {{{{.message}}}}"')),
+], 7)
+
 # ---------------------------------------------------------------- Backend
 row("Backend")
 http = f'{NS}, container="english-teacher-backend", uri!~"/actuator.*|/api/v1/health"'

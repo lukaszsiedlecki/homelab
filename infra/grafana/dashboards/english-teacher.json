@@ -1147,7 +1147,7 @@
     },
     {
       "type": "row",
-      "title": "Backend",
+      "title": "Claude Code \u2192 app",
       "id": 24,
       "collapsed": false,
       "gridPos": {
@@ -1155,6 +1155,172 @@
         "w": 24,
         "x": 0,
         "y": 74
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "MCP tool calls",
+      "description": "add_corrections and add_phrases calls from Claude Code; error = the tool failed, rejected = too many items.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum by (tool, outcome) (increase(english_teacher_mcp_calls_total{namespace=\"english-teacher\"}[$__interval]))",
+          "legendFormat": "{{tool}} {{outcome}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "1h",
+      "id": 25,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 75
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Items sent from Claude Code",
+      "description": "added = new corrections in the inbox / new phrases in the flashcards; skipped = already there.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-k8s"
+          },
+          "refId": "A",
+          "expr": "sum by (tool, result) (increase(english_teacher_mcp_items_total{namespace=\"english-teacher\"}[$__interval]))",
+          "legendFormat": "{{tool}} {{result}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "interval": "1h",
+      "id": 26,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 75
+      }
+    },
+    {
+      "type": "logs",
+      "title": "MCP calls",
+      "description": "",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki-k8s"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki-k8s"
+          },
+          "refId": "A",
+          "expr": "{namespace=\"english-teacher\", container=\"english-teacher-backend\"} |= \"MCP tool\" | json | line_format \"{{.log_level}} {{.message}}\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      },
+      "id": 27,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 83
+      }
+    },
+    {
+      "type": "row",
+      "title": "Backend",
+      "id": 28,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 90
       },
       "panels": []
     },
@@ -1209,12 +1375,12 @@
           "sort": "desc"
         }
       },
-      "id": 25,
+      "id": 29,
       "gridPos": {
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 75
+        "y": 91
       }
     },
     {
@@ -1268,12 +1434,12 @@
           "sort": "desc"
         }
       },
-      "id": 26,
+      "id": 30,
       "gridPos": {
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 75
+        "y": 91
       }
     },
     {
@@ -1327,12 +1493,12 @@
           "sort": "desc"
         }
       },
-      "id": 27,
+      "id": 31,
       "gridPos": {
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 75
+        "y": 91
       }
     }
   ]
