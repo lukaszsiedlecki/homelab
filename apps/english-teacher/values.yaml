@@ -159,7 +159,7 @@ services:
   # Redesigned front (ADR 0022 in the app repo), same image layout as english-teacher-web but under /next.
   - name: english-teacher-web-next
     image: english-teacher-web-next
-    tag: sha-6d6d2c3
+    tag: sha-f46703f
     port: 8080
     servicePort: 80
     replicas: 1
