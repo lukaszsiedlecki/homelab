@@ -25,7 +25,7 @@ jobs:
           case "$SERVICE" in
             shortliner|shortliner-analytics|shortliner-frontend|shortliner-payment|shortliner-gateway)
               FILE=apps/shortliner/values.yaml ;;
-            english-teacher-backend|english-teacher-web)
+            english-teacher-backend|english-teacher-web|english-teacher-web-next)
               FILE=apps/english-teacher/values.yaml ;;
             *)
               echo "Unknown service: $SERVICE" >&2
