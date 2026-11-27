@@ -22,14 +22,6 @@ spec:
                 name: {{ $.Values.ingress.apiService }}-svc
                 port:
                   number: {{ $.Values.ingress.apiPort }}
-          # Redesigned front (A/B): /next goes to web-next, the old front keeps everything else.
-          - path: /next
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ $.Values.ingress.webNextService }}-svc
-                port:
-                  number: {{ $.Values.ingress.webPort }}
           - path: /
             pathType: Prefix
             backend:

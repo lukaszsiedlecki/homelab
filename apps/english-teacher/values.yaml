@@ -10,8 +10,6 @@ ingress:
   apiPort: 8080
   webService: english-teacher-web
   webPort: 80
-  # Redesigned front (ADR 0022 in the app repo): served under /next next to the old one, for an A/B comparison.
-  webNextService: english-teacher-web-next
   # Library uploads go one file per request; the largest is a ZIP of a Google Drive folder (backend limit 100 MB).
   maxBodySize: 100m
 recordings:
@@ -152,35 +150,6 @@ services:
       livenessDelay: 10
     env:
       # Written to /config.json at container start.
-      - name: OIDC_AUTHORITY
-        value: "https://keycloak.lukis.ovh/realms/english-teacher"
-      - name: OIDC_CLIENT_ID
-        value: "english-web"
-  # Redesigned front (ADR 0022 in the app repo), same image layout as english-teacher-web but under /next.
-  - name: english-teacher-web-next
-    image: english-teacher-web-next
-    tag: sha-696b18b
-    port: 8080
-    servicePort: 80
-    replicas: 1
-    securityContext:
-      runAsUser: 101
-      runAsGroup: 101
-      fsGroup: 101
-    resources:
-      requests:
-        cpu: 10m
-        memory: 32Mi
-      limits:
-        cpu: 200m
-        memory: 128Mi
-    probes:
-      readinessPath: /healthz
-      readinessDelay: 2
-      livenessPath: /healthz
-      livenessDelay: 10
-    env:
-      # Written to /next/config.json at container start.
       - name: OIDC_AUTHORITY
         value: "https://keycloak.lukis.ovh/realms/english-teacher"
       - name: OIDC_CLIENT_ID
