@@ -128,7 +128,7 @@ services:
           claimName: english-teacher-recordings
   - name: english-teacher-web
     image: english-teacher-web
-    tag: sha-81b9f21
+    tag: sha-fb72af1
     port: 8080
     servicePort: 80
     replicas: 1
